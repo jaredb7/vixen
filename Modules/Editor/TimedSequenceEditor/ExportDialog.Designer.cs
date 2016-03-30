@@ -47,6 +47,7 @@
 			this.mappingColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
 			this.textBox1 = new System.Windows.Forms.TextBox();
+			this.btnUserCancel = new System.Windows.Forms.Button();
 			this.groupBox1.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
 			this.groupBox2.SuspendLayout();
@@ -62,7 +63,7 @@
 			this.buttonStart.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Transparent;
 			this.buttonStart.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
 			this.buttonStart.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(221)))), ((int)(((byte)(221)))), ((int)(((byte)(221)))));
-			this.buttonStart.Location = new System.Drawing.Point(138, 435);
+			this.buttonStart.Location = new System.Drawing.Point(16, 429);
 			this.buttonStart.Name = "buttonStart";
 			this.buttonStart.Size = new System.Drawing.Size(104, 27);
 			this.buttonStart.TabIndex = 8;
@@ -148,7 +149,7 @@
             this.progressLabel,
             this.exportProgressBar,
             this.currentTimeLabel});
-			this.statusStrip1.Location = new System.Drawing.Point(0, 480);
+			this.statusStrip1.Location = new System.Drawing.Point(0, 503);
 			this.statusStrip1.Name = "statusStrip1";
 			this.statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 16, 0);
 			this.statusStrip1.Size = new System.Drawing.Size(516, 24);
@@ -178,15 +179,14 @@
 			// 
 			this.buttonStop.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.buttonStop.BackColor = System.Drawing.Color.Transparent;
-			this.buttonStop.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+			this.buttonStop.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(68)))), ((int)(((byte)(68)))), ((int)(((byte)(68)))));
 			this.buttonStop.FlatAppearance.BorderColor = System.Drawing.Color.Black;
 			this.buttonStop.FlatAppearance.CheckedBackColor = System.Drawing.Color.Transparent;
 			this.buttonStop.FlatAppearance.MouseDownBackColor = System.Drawing.Color.Transparent;
 			this.buttonStop.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Transparent;
 			this.buttonStop.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
 			this.buttonStop.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(221)))), ((int)(((byte)(221)))), ((int)(((byte)(221)))));
-			this.buttonStop.Location = new System.Drawing.Point(243, 435);
+			this.buttonStop.Location = new System.Drawing.Point(126, 429);
 			this.buttonStop.Name = "buttonStop";
 			this.buttonStop.Size = new System.Drawing.Size(104, 27);
 			this.buttonStop.TabIndex = 15;
@@ -207,7 +207,7 @@
 			this.groupBox2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(221)))), ((int)(((byte)(221)))), ((int)(((byte)(221)))));
 			this.groupBox2.Location = new System.Drawing.Point(9, 149);
 			this.groupBox2.Name = "groupBox2";
-			this.groupBox2.Size = new System.Drawing.Size(488, 269);
+			this.groupBox2.Size = new System.Drawing.Size(488, 264);
 			this.groupBox2.TabIndex = 16;
 			this.groupBox2.TabStop = false;
 			this.groupBox2.Text = "Network";
@@ -234,7 +234,7 @@
 			this.networkListView.MultiSelect = false;
 			this.networkListView.Name = "networkListView";
 			this.networkListView.OwnerDraw = true;
-			this.networkListView.Size = new System.Drawing.Size(473, 238);
+			this.networkListView.Size = new System.Drawing.Size(473, 233);
 			this.networkListView.TabIndex = 1;
 			this.networkListView.UseCompatibleStateImageBehavior = false;
 			this.networkListView.View = System.Windows.Forms.View.Details;
@@ -253,7 +253,7 @@
 			// mappingColumn
 			// 
 			this.mappingColumn.Text = "Mapping";
-			this.mappingColumn.Width = 128;
+			this.mappingColumn.Width = 221;
 			// 
 			// backgroundWorker1
 			// 
@@ -273,6 +273,24 @@
 			this.textBox1.Text = "You must have all of your required display elements to controller outputs fully p" +
     "atched in the Display Setup for the export to produce correct results..";
 			// 
+			// btnUserCancel
+			// 
+			this.btnUserCancel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnUserCancel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(68)))), ((int)(((byte)(68)))), ((int)(((byte)(68)))));
+			this.btnUserCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+			this.btnUserCancel.FlatAppearance.BorderColor = System.Drawing.Color.Black;
+			this.btnUserCancel.FlatAppearance.MouseDownBackColor = System.Drawing.Color.Transparent;
+			this.btnUserCancel.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Transparent;
+			this.btnUserCancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.btnUserCancel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(221)))), ((int)(((byte)(221)))), ((int)(((byte)(221)))));
+			this.btnUserCancel.Location = new System.Drawing.Point(372, 429);
+			this.btnUserCancel.Name = "btnUserCancel";
+			this.btnUserCancel.Size = new System.Drawing.Size(104, 27);
+			this.btnUserCancel.TabIndex = 18;
+			this.btnUserCancel.Text = "Close";
+			this.btnUserCancel.UseVisualStyleBackColor = false;
+			// 
 			// ExportDialog
 			// 
 			this.AcceptButton = this.buttonStart;
@@ -280,8 +298,9 @@
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.AutoSize = true;
 			this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(68)))), ((int)(((byte)(68)))), ((int)(((byte)(68)))));
-			this.CancelButton = this.buttonStop;
-			this.ClientSize = new System.Drawing.Size(516, 504);
+			this.CancelButton = this.btnUserCancel;
+			this.ClientSize = new System.Drawing.Size(516, 527);
+			this.Controls.Add(this.btnUserCancel);
 			this.Controls.Add(this.textBox1);
 			this.Controls.Add(this.groupBox2);
 			this.Controls.Add(this.buttonStop);
@@ -324,5 +343,6 @@
 		private System.Windows.Forms.ColumnHeader controllerColumn;
 		private System.Windows.Forms.ColumnHeader channelsColumn;
 		private System.Windows.Forms.ColumnHeader mappingColumn;
+		private System.Windows.Forms.Button btnUserCancel;
     }
 }
