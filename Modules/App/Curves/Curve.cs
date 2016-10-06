@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -57,6 +58,15 @@ namespace VixenModules.App.Curves
 					Points = new PointPairList(new[] { 0.0, 100.0 }, new[] { 100.0, 100.0 });
 					break;
 			}
+		}
+
+		/// <summary>
+		/// Creates a flat curve of the given intensity
+		/// </summary>
+		/// <param name="intensity"></param>
+		public Curve(double intensity)
+		{
+			Points = new PointPairList(new[] { 0.0, 100.0 }, new[] { intensity, intensity });	
 		}
 
 
@@ -171,6 +181,10 @@ namespace VixenModules.App.Curves
 
 			if (returnValue > 100.0) returnValue = 100.0;
 			if (returnValue < 0.0) returnValue = 0.0;
+			if (double.IsNaN(returnValue))
+			{
+				returnValue = 100;
+			}
 
 			return returnValue;
 		}

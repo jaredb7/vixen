@@ -6,13 +6,13 @@ using System.Runtime.Serialization;
 using Vixen.Module;
 using VixenModules.App.ColorGradients;
 using VixenModules.App.Curves;
-using VixenModules.Effect.Pixel;
+using VixenModules.Effect.Effect;
 
 namespace VixenModules.Effect.Text
 {
 	[DataContract]
 	[KnownType(typeof (SerializableFont))]
-	public class TextData: ModuleDataModelBase
+	public class TextData: EffectTypeModuleData
 	{
 		public TextData()
 		{
@@ -23,6 +23,7 @@ namespace VixenModules.Effect.Text
 			Speed = 1;
 			Position = 0;
 			PositionX = 0;
+			ScaleText = 0;
 			CenterStop = false;
 			Text = new List<string>{String.Empty};
 			GradientMode = GradientMode.AcrossElement;
@@ -52,6 +53,9 @@ namespace VixenModules.Effect.Text
 
 		[DataMember]
 		public int Speed { get; set; }
+
+		[DataMember]
+		public int ScaleText { get; set; }
 
 		[DataMember]
 		public bool CenterStop { get; set; }
@@ -95,7 +99,7 @@ namespace VixenModules.Effect.Text
 			}
 		}
 
-		public override IModuleDataModel Clone()
+		protected override EffectTypeModuleData CreateInstanceForClone()
 		{
 			TextData result = new TextData
 			{
@@ -107,6 +111,7 @@ namespace VixenModules.Effect.Text
 				Position = Position,
 				PositionX = PositionX,
 				Text = Text.ToList(),
+				ScaleText = ScaleText,
 				GradientMode = GradientMode,
 				TextMode = TextMode,
 				CenterText = CenterText,

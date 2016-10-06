@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using Common.Controls.ColorManagement.ColorModels;
@@ -9,7 +7,7 @@ using Vixen.Module;
 using Vixen.Sys.Attribute;
 using VixenModules.App.ColorGradients;
 using VixenModules.App.Curves;
-using VixenModules.Effect.Pixel;
+using VixenModules.Effect.Effect;
 using VixenModules.EffectEditor.EffectDescriptorAttributes;
 
 namespace VixenModules.Effect.Spiral
@@ -21,6 +19,7 @@ namespace VixenModules.Effect.Spiral
 		public Spiral()
 		{
 			_data = new SpiralData();
+			InitAllAttributes();
 		}
 
 		public override bool IsDirty
@@ -37,6 +36,7 @@ namespace VixenModules.Effect.Spiral
 			protected set { base.IsDirty = value; }
 		}
 
+		
 		#region Setup
 		
 		[Value]
@@ -255,8 +255,20 @@ namespace VixenModules.Effect.Spiral
 			set
 			{
 				_data = value as SpiralData;
+				InitAllAttributes();
 				IsDirty = true;
 			}
+		}
+
+		private void InitAllAttributes()
+		{
+			UpdateStringOrientationAttributes(true);
+		}
+
+
+		protected override EffectTypeModuleData EffectModuleData
+		{
+			get { return _data; }
 		}
 
 		protected override void SetupRender()
@@ -269,7 +281,7 @@ namespace VixenModules.Effect.Spiral
 			//Nothing to clean up
 		}
 
-		protected override void RenderEffect(int frame, ref PixelFrameBuffer frameBuffer)
+		protected override void RenderEffect(int frame, IPixelFrameBuffer frameBuffer)
 		{
 			int colorcnt = Colors.Count();
 			int spiralCount = colorcnt * Repeat;

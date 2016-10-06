@@ -1,36 +1,54 @@
 ﻿using System;
+using System.Drawing;
 using System.Runtime.Serialization;
 using Vixen.Module;
+using VixenModules.App.ColorGradients;
 using VixenModules.App.Curves;
-using VixenModules.Effect.Pixel;
+using VixenModules.Effect.Effect;
 using ZedGraph;
 
 namespace VixenModules.Effect.Picture
 {
 	[DataContract]
-	public class PictureData: ModuleDataModelBase
+	public class PictureData : EffectTypeModuleData
 	{
 		public PictureData()
 		{
 			EffectType = EffectType.RenderPictureNone;
-			ScalePercent = 100;
-			ScaleToGrid = false;
 			Speed = 1;
 			FileName = String.Empty;
 			Orientation=StringOrientation.Vertical;
 			XOffset = 0;
 			YOffset = 0;
 			LevelCurve = new Curve(new PointPairList(new[] { 0.0, 100.0 }, new[] { 100.0, 100.0 }));
+			Colors = new ColorGradient(Color.DodgerBlue);
+			ColorEffect = ColorEffect.None;
+			ScalePercent = 50;
+			MovementRate = 4;
+			Direction = 0;
+			IncreaseBrightness = 10;
+			ScaleToGrid = true;
+			TilePictures = TilePictures.BlueGlowDots;
+			GifSpeed = 1;
 		}
+
+		[DataMember]
+		public ColorEffect ColorEffect { get; set; }
 
 		[DataMember]
 		public EffectType EffectType { get; set; }
 
 		[DataMember]
+		public TilePictures TilePictures { get; set; }
+
+		[DataMember]
 		public int Speed { get; set; }
 
 		[DataMember]
-		public bool FitToTime { get; set; }
+		public int MovementRate { get; set; }
+
+		[DataMember]
+		public int GifSpeed { get; set; }
 
 		[DataMember]
 		public string FileName { get; set; }
@@ -53,7 +71,19 @@ namespace VixenModules.Effect.Picture
 		[DataMember]
 		public Curve LevelCurve { get; set; }
 
-		public override IModuleDataModel Clone()
+		[DataMember]
+		public ColorGradient Colors { get; set; }
+
+		[DataMember]
+		public int Direction { get; set; }
+
+		[DataMember]
+		public int IncreaseBrightness { get; set; }
+
+		[DataMember]
+		public bool FitToTime { get; set; }
+
+		protected override EffectTypeModuleData CreateInstanceForClone()
 		{
 			PictureData result = new PictureData
 			{
@@ -66,7 +96,14 @@ namespace VixenModules.Effect.Picture
 				ScaleToGrid = ScaleToGrid,
 				Orientation = Orientation,
 				LevelCurve = new Curve(LevelCurve),
-				FileName = FileName
+				FileName = FileName,
+				MovementRate = MovementRate,
+				ColorEffect = ColorEffect,
+				TilePictures = TilePictures,
+				Direction = Direction,
+				GifSpeed = GifSpeed,
+				IncreaseBrightness = IncreaseBrightness,
+				Colors = Colors
 			};
 			return result;
 		}

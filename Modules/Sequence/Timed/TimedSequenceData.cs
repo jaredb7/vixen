@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using Vixen.Module;
+using Vixen.Sys.LayerMixing;
 
 namespace VixenModules.Sequence.Timed
 {
@@ -11,9 +12,6 @@ namespace VixenModules.Sequence.Timed
 	{
 		[DataMember]
 		public List<MarkCollection> MarkCollections { get; set; }
-
-		[DataMember]
-		public List<RowHeightSetting> RowHeightSettings { get; set; }
 
 		[DataMember]
 		public TimeSpan TimePerPixel { get; set; }
@@ -28,17 +26,34 @@ namespace VixenModules.Sequence.Timed
 		public int DefaultSplitterDistance { get; set; }
 
 		[DataMember]
-		public List<Guid> RowGuidId { get; set; }
+		public RowSettings RowSettings { get; set; }
+		
+
+		[DataMember]
+		public TimeSpan? DefaultPlaybackEndTime { get; set; }
+
+		[DataMember]
+		public TimeSpan? DefaultPlaybackStartTime { get; set; }
 
 		public TimedSequenceData()
 		{
 			MarkCollections = new List<MarkCollection>();
 			TimePerPixel = TimeSpan.MinValue;
-			RowHeightSettings = new List<RowHeightSetting>();
-			DefaultRowHeight = 32;
-			RowGuidId = new List<Guid>();
+			DefaultRowHeight = 0;
+			RowSettings = new RowSettings();
 			VisibleTimeStart = TimeSpan.MinValue;
-			DefaultSplitterDistance = 200;
+			DefaultSplitterDistance = 0;
+			DefaultPlaybackStartTime = TimeSpan.Zero;
+			DefaultPlaybackEndTime = TimeSpan.Zero;
+		}
+
+		[OnDeserialized]
+		void OnDeserialized(StreamingContext c)
+		{
+			if (RowSettings == null)
+			{
+				RowSettings = new RowSettings();
+			}
 		}
 
 		public override IModuleDataModel Clone()

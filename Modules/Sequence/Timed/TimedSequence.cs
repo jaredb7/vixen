@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Vixen.Sys.LayerMixing;
 
 namespace VixenModules.Sequence.Timed
 {
@@ -13,16 +14,10 @@ namespace VixenModules.Sequence.Timed
 			set { ((TimedSequenceData) SequenceData).MarkCollections = value; }
 		}
 
-		public List<RowHeightSetting> RowHeightSettings
+		public RowSettings RowSettings
 		{
-			get { return ((TimedSequenceData)SequenceData).RowHeightSettings; }
-			set { ((TimedSequenceData)SequenceData).RowHeightSettings = value; }
-		}
-
-		public List<Guid> RowGuidId
-		{
-			get { return ((TimedSequenceData)SequenceData).RowGuidId; }
-			set { ((TimedSequenceData)SequenceData).RowGuidId = value; }
+			get { return ((TimedSequenceData)SequenceData).RowSettings; }
+			set { ((TimedSequenceData)SequenceData).RowSettings = value; }
 		}
 
 		public override string FileExtension
@@ -52,6 +47,24 @@ namespace VixenModules.Sequence.Timed
 		{
 			get { return ((TimedSequenceData)SequenceData).DefaultSplitterDistance; }
 			set { ((TimedSequenceData)SequenceData).DefaultSplitterDistance = value; }
+		}
+
+		public TimeSpan? DefaultPlaybackStartTime
+		{
+			get { return ((TimedSequenceData)SequenceData).DefaultPlaybackStartTime; }
+			set { ((TimedSequenceData)SequenceData).DefaultPlaybackStartTime = value; }
+		}
+
+		public TimeSpan? DefaultPlaybackEndTime
+		{
+			get { return ((TimedSequenceData)SequenceData).DefaultPlaybackEndTime; }
+			set { ((TimedSequenceData)SequenceData).DefaultPlaybackEndTime = value; }
+		}
+
+		public SequenceLayers SequenceLayers
+		{
+			get { return ((TimedSequenceData)SequenceData).SequenceLayers; }
+			set { ((TimedSequenceData)SequenceData).SequenceLayers = value; }
 		}
 
 	}

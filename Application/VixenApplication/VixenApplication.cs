@@ -17,6 +17,7 @@ using Vixen.Sys;
 using NLog;
 using Common.Resources.Properties;
 using Common.Controls;
+using Common.Controls.Scaling;
 using Common.Controls.Theme;
 
 namespace VixenApplication
@@ -40,7 +41,6 @@ namespace VixenApplication
 		{
 			InitializeComponent();
 			labelVersion.Font = new Font("Segoe UI", 14);
-			labelDebugVersion.Font = new Font("Segoe UI", 9);
 			//Get rid of the ugly grip that we dont want to show anyway. 
 			//Workaround for a MS bug
 			statusStrip.Padding = new Padding(statusStrip.Padding.Left,
@@ -447,6 +447,10 @@ namespace VixenApplication
 				if (messageBox.DialogResult == DialogResult.OK)
 					editor.Save();
 			}
+			else if (editor.IsEditorStateModified)
+			{
+				editor.Save();
+			}
 
 			if (_openEditors.Contains(editor)) {
 				_openEditors.Remove(editor);
@@ -722,6 +726,17 @@ namespace VixenApplication
 			}
 
 			listViewRecentSequences.EndUpdate();
+			ColumnAutoSize();
+		}
+
+		public void ColumnAutoSize()
+		{
+			listViewRecentSequences.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+			ListView.ColumnHeaderCollection cc = listViewRecentSequences.Columns;
+			for (int i = 0; i < cc.Count; i++)
+			{
+				cc[i].Width = listViewRecentSequences.Width - (int)(listViewRecentSequences.Width *.18d);
+			}
 		}
 
 		#endregion
@@ -747,19 +762,19 @@ namespace VixenApplication
 			_thisProc = Process.GetCurrentProcess();
 			_cpuUsage = new CpuUsage();
 
-			try
-			{
-				if (PerformanceCounterCategory.Exists(".NET CLR Memory"))
-				{
-					_committedRamCounter = new PerformanceCounter(".NET CLR Memory", "# Total committed Bytes", _thisProc.ProcessName);
-					_reservedRamCounter = new PerformanceCounter(".NET CLR Memory", "# Total reserved Bytes", _thisProc.ProcessName);
-					_perfCountersAvailable = true;
-				}
-			}
-			catch (Exception ex)
-			{
-				Logging.Error("Cannot access performance counters. Refresh the counter list with lodctr /R");
-			}
+			//try
+			//{
+			//	if (PerformanceCounterCategory.Exists(".NET CLR Memory"))
+			//	{
+			//		_committedRamCounter = new PerformanceCounter(".NET CLR Memory", "# Total committed Bytes", _thisProc.ProcessName);
+			//		_reservedRamCounter = new PerformanceCounter(".NET CLR Memory", "# Total reserved Bytes", _thisProc.ProcessName);
+			//		_perfCountersAvailable = true;
+			//	}
+			//}
+			//catch (Exception ex)
+			//{
+			//	Logging.Error("Cannot access performance counters. Refresh the counter list with lodctr /R");
+			//}
 
 			_statsTimer = new Timer();
 			_statsTimer.Interval = StatsUpdateInterval;
@@ -770,25 +785,25 @@ namespace VixenApplication
 
 		private void statsTimer_Tick(object sender, EventArgs e)
 		{
-			long memUsage;
-			long reservedMemUsage;
+			//long memUsage;
+			//long reservedMemUsage;
 
-			if (_perfCountersAvailable)
-			{
-				memUsage = Convert.ToInt32(_committedRamCounter.NextValue()/1024/1024);
-				reservedMemUsage = Convert.ToInt32(_reservedRamCounter.NextValue()/1024/1024);
-			}
-			else
-			{
-				memUsage = _thisProc.PrivateMemorySize64 / 1024 / 1024;
-				reservedMemUsage = _thisProc.VirtualMemorySize64 / 1024 / 1024;
-			}
+			//if (_perfCountersAvailable)
+			//{
+			//	memUsage = Convert.ToInt32(_committedRamCounter.NextValue()/1024/1024);
+			//	reservedMemUsage = Convert.ToInt32(_reservedRamCounter.NextValue()/1024/1024);
+			//}
+			//else
+			//{
+			//	_thisProc.Refresh();
+			//	memUsage = _thisProc.PrivateMemorySize64 / 1024 / 1024;
+			//	reservedMemUsage = _thisProc.VirtualMemorySize64 / 1024 / 1024;
+			//}
 
 			
 			
 
-			toolStripStatusLabel_memory.Text = String.Format("Mem: {0}/{2} MB   CPU: {1}%",
-			                                                 memUsage, _cpuUsage.GetUsage(), reservedMemUsage);
+			toolStripStatusLabel_memory.Text = String.Format("CPU: {0}%",_cpuUsage.GetUsage());
 		}
 
 		#endregion
@@ -851,8 +866,10 @@ namespace VixenApplication
 			Pen borderColor = new Pen(ThemeColorTable.GroupBoxBorderColor, 1);
 			if (ActiveForm != null)
 			{
-				e.Graphics.DrawLine(borderColor, 0, pictureBox1.Size.Height + 30, ActiveForm.Width, pictureBox1.Size.Height + 30);
-				e.Graphics.DrawLine(borderColor, 0, Height - (statusStrip.Height + 40), Width, Height - (statusStrip.Height + 40));
+				int extraSpace1 = (int) (30*ScalingTools.GetScaleFactor());
+				int extraSpace2 = (int) (40 * ScalingTools.GetScaleFactor());
+				e.Graphics.DrawLine(borderColor, 0, pictureBox1.Size.Height + extraSpace1, ActiveForm.Width, pictureBox1.Size.Height + extraSpace1);
+				e.Graphics.DrawLine(borderColor, 0, Height - (statusStrip.Height + extraSpace2), Width, Height - (statusStrip.Height + extraSpace2));
 			}
 		}
 

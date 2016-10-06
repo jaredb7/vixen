@@ -146,10 +146,22 @@ namespace VixenApplication
 			}
 
 			listViewControllers.EndUpdate();
+			ColumnAutoSize();
 
 			foreach (ListViewItem item in listViewControllers.Items) {
 				if (item.Tag == _displayedController)
 					item.Selected = true;
+			}
+		}
+
+		public void ColumnAutoSize()
+		{
+			listViewControllers.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+			ListView.ColumnHeaderCollection cc = listViewControllers.Columns;
+			var width = (listViewControllers.Width - (int) (listViewControllers.Width*.06d))/listViewControllers.Columns.Count;
+			for (int i = 0; i < cc.Count; i++)
+			{
+				cc[i].Width = width;
 			}
 		}
 
@@ -185,8 +197,16 @@ namespace VixenApplication
 
 		private void ConfigureSelectedController()
 		{
-			if (listViewControllers.SelectedItems.Count == 1) {
-				(listViewControllers.SelectedItems[0].Tag as OutputPreview).Setup();
+			if (listViewControllers.SelectedItems.Count == 1)
+			{
+				var preview = listViewControllers.SelectedItems[0].Tag as OutputPreview;
+				if (preview != null)
+				{
+					preview.Stop();
+					preview.Setup();
+					preview.Start();
+				}
+				
 			}
 		}
 

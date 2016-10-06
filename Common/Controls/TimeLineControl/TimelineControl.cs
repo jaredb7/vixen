@@ -12,13 +12,16 @@ using System.Diagnostics;
 using Common.Controls.Theme;
 using VixenModules.Media.Audio;
 using System.Threading.Tasks;
+using Common.Controls.Scaling;
 
 namespace Common.Controls.Timeline
 {
 	[System.ComponentModel.DesignerCategory("")] // Prevent this from showing up in designer.
 	public class TimelineControl : TimelineControlBase, IEnumerable<Row>
 	{
-		private const int InitialSplitterDistance = 200;
+		//These are the 96 DPI based defaults. They should be scaled if used.
+		public const int DefaultSplitterDistance = 200;
+		public const int DefaultRowHeight = 32;
 
 		#region Member Controls
 
@@ -30,7 +33,7 @@ namespace Common.Controls.Timeline
 		// Right side (Panel 2)
 		public Ruler ruler;
 		public Grid grid;
-		private Waveform waveform;
+		public Waveform waveform;
 
 		#endregion
 
@@ -55,6 +58,7 @@ namespace Common.Controls.Timeline
 		public TimelineControl()
 			: base(new TimeInfo()) // This is THE TimeInfo object for the whole control (and all sub-controls).
 		{
+			rowHeight = (int)(DefaultRowHeight*ScalingTools.GetScaleFactor());
 			TimeInfo.TimePerPixel = TimeSpan.FromTicks(100000);
 			TimeInfo.VisibleTimeStart = TimeSpan.Zero;
 
@@ -144,10 +148,11 @@ namespace Common.Controls.Timeline
 
 			InitializePanel1();
 			InitializePanel2();
-
+			
 			splitContainer.ResumeLayout(false);
 			splitContainer.EndInit();
-
+		
+			splitContainer.PerformAutoScale();
 			this.ResumeLayout(false);
 		}
 
@@ -190,7 +195,7 @@ namespace Common.Controls.Timeline
 			ruler = new Ruler(TimeInfo)
 			        	{
 			        		Dock = DockStyle.Top,
-			        		Height = 40,
+			        		Height = 50,
 			        	};
 			splitContainer.Panel2.Controls.Add(ruler);
 
@@ -625,19 +630,21 @@ namespace Common.Controls.Timeline
 			remove { ruler.TimeRangeDragged -= value; }
 		}
 
+		public event EventHandler<SelectedMarkMoveEventArgs> SelectedMarkMove
+		{
+			add { Ruler.SelectedMarkMove += value; }
+			remove { Ruler.SelectedMarkMove -= value; }
+		}
+
 		#endregion
 		
 		#region Event Handlers
-
-		public int DefaultSplitterDistance;
 
 		private void GridScrollVerticalHandler(object sender, EventArgs e)
 		{
 			if (timelineRowList != null)
 				timelineRowList.Top = grid.Top;
 			timelineRowList.VerticalOffset = grid.VerticalOffset;
-
-			DefaultSplitterDistance = splitContainer.SplitterDistance;
 
 			// I know it's bad to do this, but when we scroll we can get very nasty artifacts
 			// and it looks shit in general. So, force an immediate graphical refresh
@@ -681,7 +688,7 @@ namespace Common.Controls.Timeline
 				if (row.Name == selectedRow.Name)
 				{
 					row.Height = selectedRow.Height;
-				}
+		}
 			}
 		}
 
@@ -727,12 +734,13 @@ namespace Common.Controls.Timeline
 			//ensure that rows are completed before refreshing allowing a smooth transistion.
 			EnableDisableHandlers(false);
 			grid.AllowGridResize = false;
+			rowHeight = (int)(DefaultRowHeight*ScalingTools.GetScaleFactor());
 			foreach (Row row in Rows)
 			{
-				if (row.Height != 32)
-					row.Height = 32;
+				if (row.Height != rowHeight )
+					row.Height = rowHeight;
 			}
-			rowHeight = 32;
+			
 			EnableDisableHandlers();
 			grid.AllowGridResize = true;
 			LayoutRows();
@@ -796,7 +804,8 @@ namespace Common.Controls.Timeline
 				{
 					// holding the control key zooms the horizontal axis under the cursor, by 10% per mouse wheel tick
 					ZoomTime(1.0 - ((double)e.Delta / 1200.0), e.Location);
-				}
+	//			waveform.Invalidate();
+			}
 				else
 				{
 					// holding the control key zooms the horizontal axis, by 10% per mouse wheel tick
@@ -807,7 +816,8 @@ namespace Common.Controls.Timeline
 				// holding the skift key moves the horizontal axis, by 10% of the visible time span per mouse wheel tick
 				// wheel towards user   --> negative delta --> VisibleTimeStart increases
 				// wheel away from user --> positive delta --> VisibleTimeStart decreases
-				VisibleTimeStart += VisibleTimeSpan.Scale(-((double) e.Delta/1200.0));
+				VisibleTimeStart += VisibleTimeSpan.Scale(-((double)e.Delta / 1200.0));
+	//			waveform.Invalidate();
 			}
 			else {
 				// moving the mouse wheel with no modifiers moves the display vertically, 40 pixels per mouse wheel tick
@@ -846,14 +856,16 @@ namespace Common.Controls.Timeline
 
 		protected override void OnLoad(EventArgs e)
 		{
-			splitContainer.SplitterDistance = InitialSplitterDistance;
 			base.OnLoad(e);
 		}
 
 		protected override void OnLayout(LayoutEventArgs e)
 		{
 			//Console.WriteLine("Layout");
-			timelineRowList.Top = grid.Top;
+			if (grid != null)
+			{
+				timelineRowList.Top = grid.Top;
+			}
 			base.OnLayout(e);
 		}
 
