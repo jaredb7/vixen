@@ -2,13 +2,14 @@
 using System.Linq;
 using System.Windows.Forms;
 using System.Drawing;
-using System.Collections.Generic;
 using Common.Controls;
+using Common.Controls.Scaling;
 using Common.Controls.Theme;
 using Common.Controls.Timeline;
+using Common.Resources;
+using Common.Resources.Properties;
 using Vixen.Module.Effect;
 using Vixen.Services;
-using VixenApplication;
 using WeifenLuo.WinFormsUI.Docking;
 using VixenModules.Sequence.Timed;
 
@@ -19,11 +20,21 @@ namespace VixenModules.Editor.TimedSequenceEditor
 		public Form_Marks(TimelineControl timelineControl)
 		{
 			InitializeComponent();
+			int iconSize = (int)(20 * ScalingTools.GetScaleFactor());
+			toolStripButtonAddMarkCollection.Image = Tools.GetIcon(Resources.add, iconSize);
+			toolStripButtonAddMarkCollection.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			toolStripButtonDeleteMarkCollection.Image = Tools.GetIcon(Resources.delete, iconSize);
+			toolStripButtonDeleteMarkCollection.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			toolStripButtonEditMarkCollection.Image = Tools.GetIcon(Resources.pencil, iconSize);
+			toolStripButtonEditMarkCollection.DisplayStyle = ToolStripItemDisplayStyle.Image;
+			toolStrip1.ImageScalingSize = new Size(iconSize, iconSize);
 			TimelineControl = timelineControl;
 			ForeColor = ThemeColorTable.ForeColor;
 			BackColor = ThemeColorTable.BackgroundColor;
 			ThemeUpdateControls.UpdateControls(this);
+			contextMenuStrip1.Renderer = new ThemeToolStripRenderer();
 			listViewMarkCollections.BackColor = ThemeColorTable.BackgroundColor; //Over-rides the default Listview background
+			toolStripButtonDeleteMarkCollection.Enabled = false;
 		}
 
 		private void Form_Marks_Load(object sender, EventArgs e)
@@ -32,6 +43,7 @@ namespace VixenModules.Editor.TimedSequenceEditor
 			numericUpDownStandardNudge.Value = xml.GetSetting(XMLProfileSettings.SettingType.AppSettings, string.Format("{0}/StandardNudge", Name), 10);
 			numericUpDownSuperNudge.Value = xml.GetSetting(XMLProfileSettings.SettingType.AppSettings, string.Format("{0}/SuperNudge", Name), 20);
 			//xml = null;
+			ResizeColumnHeaders();
 		}
 
 		public TimelineControl TimelineControl { get; set; }
@@ -130,6 +142,7 @@ namespace VixenModules.Editor.TimedSequenceEditor
 			MarkCollection mc = (listViewMarkCollections.Items[e.Item].Tag as MarkCollection);
 			mc.Name = e.Label ?? mc.Name;
 			OnChangedMarkCollection(new MarkCollectionArgs(mc));
+			PopulateMarkCollectionsList(mc);
 		}
 
 		private void toolStripButtonAddMarkCollection_Click(object sender, EventArgs e)
@@ -166,7 +179,7 @@ namespace VixenModules.Editor.TimedSequenceEditor
 
 		private void listViewMarkCollections_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
 		{
-			if (e.KeyCode == Keys.Delete)
+			if (e.KeyCode == Keys.Delete && listViewMarkCollections.SelectedItems.Count > 0)
 			{
 				DeleteSelectedMarkCollections();
 			}
@@ -174,30 +187,93 @@ namespace VixenModules.Editor.TimedSequenceEditor
 
 		private void DeleteSelectedMarkCollections()
 		{
-			if (listViewMarkCollections.SelectedItems.Count > 0)
+			//messageBox Arguments are (Text, Title, No Button Visible, Cancel Button Visible)
+			MessageBoxForm.msgIcon = SystemIcons.Question; //adds a system icon to the message form.
+			var messageBox = new MessageBoxForm("Are you sure you want to delete the selected Marks in the Collection?", "Delete Mark Collection", true, false);
+			messageBox.ShowDialog();
+			if (messageBox.DialogResult == DialogResult.OK)
 			{
-				//messageBox Arguments are (Text, Title, No Button Visible, Cancel Button Visible)
-				MessageBoxForm.msgIcon = SystemIcons.Question; //adds a system icon to the message form.
-				var messageBox = new MessageBoxForm("Are you sure you want to delete the selected Marks in the Collection?", "Delete Mark Collection", true, false);
-				messageBox.ShowDialog();
-				if (messageBox.DialogResult == DialogResult.OK)
+				foreach (ListViewItem item in listViewMarkCollections.SelectedItems)
 				{
-					foreach (ListViewItem item in listViewMarkCollections.SelectedItems)
-					{
-						listViewMarkCollections.SelectedItems[0].Remove();
-						MarkCollection mc = item.Tag as MarkCollection;
-						Sequence.MarkCollections.Remove(mc);
-					}
-					OnChangedMarkCollection(new MarkCollectionArgs(null));
+					listViewMarkCollections.SelectedItems[0].Remove();
+					MarkCollection mc = item.Tag as MarkCollection;
+					Sequence.MarkCollections.Remove(mc);
 				}
+				OnChangedMarkCollection(new MarkCollectionArgs(null));
 			}
-			else
+		}
+
+		private void contextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+		{
+			e.Cancel = (listViewMarkCollections.SelectedItems.Count == 0);
+			boldToolStripMenuItem.Enabled = true;
+			dottedSolidToolStripMenuItem.Enabled = true;
+		}
+
+		private void boldToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			var menuAction = sender;
+			changeMarkCollection(menuAction);
+		}
+
+		private void dottedSolidToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			var menuAction = sender;
+			changeMarkCollection(menuAction);
+		}
+
+		private void changeColorToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			var menuAction = sender;
+			changeMarkCollection(menuAction);
+		}
+
+		private void deleteMarksToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			var menuAction = sender;
+			changeMarkCollection(menuAction);
+		}
+
+		private void changeMarkCollection(object menuAction)
+		{
+			DialogResult result = DialogResult.Cancel;
+			Common.Controls.ColorManagement.ColorPicker.ColorPicker picker = null;
+			switch (menuAction.ToString())
 			{
-				//messageBox Arguments are (Text, Title, No Button Visible, Cancel Button Visible)
-				MessageBoxForm.msgIcon = SystemIcons.Error; //adds a system icon to the message form.
-				var messageBox = new MessageBoxForm("Please select a Mark Collection to delete and press the delete button again.", "Delete Mark Collection", false, false);
-				messageBox.ShowDialog();
+				case "Change Color":
+					picker = new Common.Controls.ColorManagement.ColorPicker.ColorPicker();
+					result = picker.ShowDialog();
+					break;
 			}
+			foreach (ListViewItem item in listViewMarkCollections.SelectedItems)
+			{
+				MarkCollection mc = item.Tag as MarkCollection;
+				switch (menuAction.ToString())
+				{
+					case "Normal/Bold Line":
+						mc.Bold = !mc.Bold;
+						break;
+					case "Dotted/Solid Line":
+						mc.SolidLine = !mc.SolidLine;
+						break;
+					case "Change Color":
+						if (result == DialogResult.OK)
+						{
+							mc.MarkColor = picker.Color.ToRGB().ToArgb();
+							item.ForeColor = picker.Color.ToRGB().ToArgb();
+						}
+						break;
+					case "Delete Selected Marks":
+						DeleteSelectedMarkCollections();
+						return;
+				}
+				OnMarkCollectionChecked(new MarkCollectionArgs(mc));
+			}
+		}
+
+		private void listViewMarkCollections_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			toolStripButtonDeleteMarkCollection.Enabled = listViewMarkCollections.SelectedItems.Count > 0;
 		}
 
 	}

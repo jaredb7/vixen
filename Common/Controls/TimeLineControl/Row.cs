@@ -100,6 +100,7 @@ namespace Common.Controls.Timeline
 					m_rowLabel.HeightChanged -= HeightChangedHandler;
 					m_rowLabel.LabelClicked -= LabelClickedHandler;
 					m_rowLabel.HeightResized -= HeightResizedHandler;
+					m_rowLabel.RowContextMenuSelect -= RowContextMenuSelectHandler;
 				}
 
 				m_rowLabel = value;
@@ -108,12 +109,29 @@ namespace Common.Controls.Timeline
 				m_rowLabel.HeightChanged += HeightChangedHandler;
 				m_rowLabel.LabelClicked += LabelClickedHandler;
 				m_rowLabel.HeightResized += HeightResizedHandler;
+				m_rowLabel.RowContextMenuSelect += RowContextMenuSelectHandler;
 
 				_RowChanged();
 			}
 		}
 
 		private Row m_parentRow;
+
+		/// <summary>
+		/// This is a hash id based on its position in the tree. It is based on the hash of it's name and all it's parents. 
+		/// This should provide a pretty unique that is fairly static for restoring row settings. This can change if the user 
+		/// restructures the group, but then the settings are probably not valid anyway.
+		/// </summary>
+		/// <returns></returns>
+		public double TreeId()
+		{
+			if (ParentRow == null)
+			{
+				return Name.GetHashCode();
+			}
+
+			return Name.GetHashCode() + ParentRow.TreeId();
+		}
 
 		public Row ParentRow
 		{
@@ -223,6 +241,7 @@ namespace Common.Controls.Timeline
 		public static event EventHandler RowChanged;
 		public static event EventHandler RowHeightChanged;
 		public static event EventHandler RowHeightResized;
+		public static event EventHandler RowLabelContextMenuSelect;
 		public static event EventHandler<ModifierKeysEventArgs> RowSelectedChanged;
 
 		private void _ElementAdded(Element te)
@@ -250,9 +269,14 @@ namespace Common.Controls.Timeline
 			if (RowHeightChanged != null) RowHeightChanged(this, EventArgs.Empty);
 		}
 
-		private void _RowHeightResized()
+		public void _RowHeightResized()
 		{
 			if (RowHeightResized != null) RowHeightResized(this, EventArgs.Empty);
+		}
+
+		private void _RowLabelContextMenuSelect()
+		{
+			if (RowLabelContextMenuSelect != null) RowLabelContextMenuSelect(this, EventArgs.Empty);
 		}
 
 		private void _RowSelectedChanged(Keys k)
@@ -298,7 +322,12 @@ namespace Common.Controls.Timeline
 
 		protected void HeightResizedHandler(object sender, EventArgs e)
 		{
-			_RowHeightResized();	
+			_RowHeightResized();
+		}
+
+		protected void RowContextMenuSelectHandler(object sender, EventArgs e)
+		{
+			_RowLabelContextMenuSelect();
 		}
 
 		protected void LabelClickedHandler(object sender, ModifierKeysEventArgs e)

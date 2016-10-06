@@ -1,14 +1,14 @@
 ﻿using System.Runtime.Serialization;
-using System.ComponentModel;
 using Vixen.Module;
 using VixenModules.App.ColorGradients;
 using VixenModules.App.Curves;
 using System.Drawing;
+using VixenModules.Effect.Effect;
 
 namespace VixenModules.Effect.Chase
 {
 	[DataContract]
-	public class ChaseData : ModuleDataModelBase
+	public class ChaseData : EffectTypeModuleData
 	{
 		[DataMember]
 		public ChaseColorHandling ColorHandling { get; set; }
@@ -18,6 +18,9 @@ namespace VixenModules.Effect.Chase
 
 		[DataMember]
 		public double DefaultLevel { get; set; }
+
+		[DataMember]
+		public bool EnableDefaultLevel { get; set; }
 
 		private Color _staticColor;
 
@@ -64,14 +67,16 @@ namespace VixenModules.Effect.Chase
 			DepthOfEffect = 0;
 			ExtendPulseToStart = false;
 			ExtendPulseToEnd = false;
+			EnableDefaultLevel = false;
 		}
 
-		public override IModuleDataModel Clone()
+		protected override EffectTypeModuleData CreateInstanceForClone()
 		{
 			ChaseData result = new ChaseData();
 			result.ColorHandling = ColorHandling;
 			result.PulseOverlap = PulseOverlap;
 			result.DefaultLevel = DefaultLevel;
+			result.EnableDefaultLevel = EnableDefaultLevel;
 			result.StaticColor = StaticColor;
 			result.ColorGradient = new ColorGradient(ColorGradient);
 			result.PulseCurve = new Curve(PulseCurve);

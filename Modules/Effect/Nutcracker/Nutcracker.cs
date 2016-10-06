@@ -60,27 +60,6 @@ namespace VixenModules.Effect.Nutcracker
 					RenderNode(node);
 			}
 
-			_elementIntents.Clear();
-		}
-
-		//Nutcracker is special right now as we only ever generate one intent per element, we can skip a lot of logic
-		//in the base class as if we are active, our intents are always in the relative time.
-		public override ElementIntents GetElementIntents(TimeSpan effectRelativeTime)
-		{
-			if (!_elementIntents.Any())
-			{
-				_AddLocalIntents();
-			}
-			return _elementIntents;
-		}
-
-		private void _AddLocalIntents()
-		{
-			EffectIntents effectIntents = Render();
-			foreach (KeyValuePair<Guid, IntentNodeCollection> keyValuePair in effectIntents)
-			{
-				_elementIntents.AddIntentNodeToElement(keyValuePair.Key, keyValuePair.Value.ToArray());
-			}
 		}
 
 		protected override EffectIntents _Render()
@@ -102,22 +81,14 @@ namespace VixenModules.Effect.Nutcracker
 			}
 		}
 
-		//public double IntensityLevel
-		//{
-		//	get { return 100; }
-		//	set { IsDirty = true; }
-		//}
-
-		//public Color Color
-		//{
-		//	get { return SystemColors.ActiveBorder; }
-		//	set { IsDirty = true; }
-		//}
-		[Category("Warning")]
-		[DisplayName(" ")]
-		public string Warning
+		public override string Information
 		{
-			get { return "Not supported in this editor."; }
+			get { return "To edit this existing effect, double click on the effect in the timeline and use the legacy effect editor.\r\n\nWARNING: This effect will soon be deprecated. You should replace this effect with the newer native effect of the same type."; }
+		}
+
+		public override string InformationLink
+		{
+			get { return "http://www.vixenlights.com/vixen-3-documentation/sequencer/effects/nutcracker-effects/"; }
 		}
 
 		[Value]

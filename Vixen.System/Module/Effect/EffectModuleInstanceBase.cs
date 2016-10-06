@@ -7,7 +7,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using NLog;
-using Vixen.Attributes;
+using Vixen.Module.Media;
 using Vixen.Services;
 using Vixen.Sys;
 
@@ -22,9 +22,10 @@ namespace Vixen.Module.Effect
 		ICustomTypeDescriptor
 	{
 		private ElementNode[] _targetNodes;
+		private List<IMediaModuleInstance> _media;
 		private TimeSpan _timeSpan;
+		private TimeSpan _startTime;
 		private DefaultValueArrayMember _parameterValues;
-		protected ElementIntents _elementIntents;
 		private static Logger Logging = LogManager.GetCurrentClassLogger();
 		private readonly Dictionary<string, bool> _browsableState = new Dictionary<string, bool>();
 
@@ -33,9 +34,9 @@ namespace Vixen.Module.Effect
 			_targetNodes = new ElementNode[0];
 				//set member directly on creation to prevent target node changed events from occuring.
 			TimeSpan = TimeSpan.Zero;
+			StartTime = TimeSpan.Zero;
 			IsDirty = true;
 			_parameterValues = new DefaultValueArrayMember(this);
-			_elementIntents = new ElementIntents();
 		}
 
 		[Browsable(false)]
@@ -53,16 +54,12 @@ namespace Vixen.Module.Effect
 				{
 					_targetNodes = value;
 					_EnsureTargetNodeProperties();
-					CalculateAffectedElements();
 					TargetNodesChanged();
 					IsDirty = true;
 					OnPropertyChanged();
 				}
 			}
 		}
-
-		[Browsable(false)]
-		public IEnumerable<Guid> EffectedElementIds { get; set; }
 
 		[Browsable(false)]
 		public TimeSpan TimeSpan
@@ -73,6 +70,20 @@ namespace Vixen.Module.Effect
 				if (value != _timeSpan)
 				{
 					_timeSpan = value;
+					IsDirty = true;
+				}
+			}
+		}
+
+		[Browsable(false)]
+		public TimeSpan StartTime
+		{
+			get { return _startTime; }
+			set
+			{
+				if (value != _startTime)
+				{
+					_startTime = value;
 					IsDirty = true;
 				}
 			}
@@ -109,8 +120,10 @@ namespace Vixen.Module.Effect
 					//Trap any errors to prevent the effect from staying in a state of rendering.
 					Logging.Error(String.Format("Error rendering {0}", EffectName), e);
 				}
-
-				IsRendering = false;
+				finally
+				{
+					IsRendering = false;
+				}
 			}
 			else
 			{
@@ -149,6 +162,18 @@ namespace Vixen.Module.Effect
 		public virtual string EffectName
 		{
 			get { return Descriptor != null ? ((IEffectModuleDescriptor) Descriptor).EffectName : ""; }
+		}
+
+		[Browsable(false)]
+		public virtual string Information
+		{
+			get { return ""; }
+		}
+
+		[Browsable(false)]
+		public virtual string InformationLink
+		{
+			get { return "http://vixenlights.com"; }
 		}
 
 		[Browsable(false)]
@@ -193,33 +218,21 @@ namespace Vixen.Module.Effect
 			}
 		}
 
-		public virtual ElementIntents GetElementIntents(TimeSpan effectRelativeTime)
+		[Browsable(false)]
+		public bool SupportsMedia
 		{
-			_elementIntents.Clear();
-
-			_AddLocalIntents(effectRelativeTime);
-
-			return _elementIntents;
+			get { return ((IEffectModuleDescriptor) Descriptor).SupportsMedia; }
 		}
 
-		private void _AddLocalIntents(TimeSpan effectRelativeTime)
+		[Browsable(false)]
+		public List<IMediaModuleInstance> Media
 		{
-			EffectIntents effectIntents = Render();
-			foreach (Guid elementId in effectIntents.ElementIds)
+			get { return _media; }
+			set
 			{
-				IIntentNode[] elementIntents = effectIntents.GetElementIntentsAtTime(elementId, effectRelativeTime);
-				_elementIntents.AddIntentNodeToElement(elementId, elementIntents);
+				_media = value;
+				IsDirty = true;
 			}
-		}
-
-		private void CalculateAffectedElements()
-		{
-			if (TargetNodes == null || TargetNodes.Length == 0)
-			{
-				EffectedElementIds = Enumerable.Empty<Guid>();
-			}
-			EffectedElementIds =
-				TargetNodes.SelectMany(y => y.GetElementEnumerator()).Select(z => z.Id);
 		}
 
 		private void _EnsureTargetNodeProperties()

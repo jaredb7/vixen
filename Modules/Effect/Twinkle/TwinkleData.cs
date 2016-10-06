@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 using System.Drawing;
 using Vixen.Module;
 using VixenModules.App.ColorGradients;
+using VixenModules.Effect.Effect;
 
 namespace VixenModules.Effect.Twinkle
 {
 	[DataContract]
-	public class TwinkleData : ModuleDataModelBase
+	public class TwinkleData : EffectTypeModuleData
 	{
 		[DataMember]
 		public bool IndividualChannels { get; set; }
@@ -53,6 +51,16 @@ namespace VixenModules.Effect.Twinkle
 		[DataMember]
 		public ColorGradient ColorGradient { get; set; }
 
+		[OnDeserialized]
+		void OnDeserialized(StreamingContext c)
+		{
+			//Ensure defaults for new fields that might not be in older effects.
+			if (StaticColor.IsEmpty)
+			{
+				StaticColor = Color.White;
+			}
+		}
+
 		[DataMember]
 		public int DepthOfEffect { get; set; }
 
@@ -66,12 +74,12 @@ namespace VixenModules.Effect.Twinkle
 			PulseTimeVariation = 30;
 			AverageCoverage = 50;
 			ColorHandling = TwinkleColorHandling.GradientForEachPulse;
-			StaticColor = Color.Empty;
+			StaticColor = Color.White;
 			ColorGradient = new ColorGradient(Color.White);
 			DepthOfEffect = 0;
 		}
 
-		public override IModuleDataModel Clone()
+		protected override EffectTypeModuleData CreateInstanceForClone()
 		{
 			TwinkleData result = new TwinkleData();
 			result.IndividualChannels = IndividualChannels;

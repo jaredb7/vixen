@@ -12,6 +12,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Windows.Forms;
+using Common.Controls.Scaling;
 
 namespace VixenApplication
 {
@@ -31,7 +32,8 @@ namespace VixenApplication
 			BackColor = ThemeColorTable.BackgroundColor;
 			ThemeUpdateControls.UpdateControls(this);
 			Icon = Resources.Icon_Vixen3;
-			buttonSetSaveFolder.Image = Tools.GetIcon(Resources.folder, 16);
+			int iconSize = (int)(16 * ScalingTools.GetScaleFactor());
+			buttonSetSaveFolder.Image = Tools.GetIcon(Resources.folder, iconSize);
 			_bw.WorkerReportsProgress=true;
 			_bw.WorkerSupportsCancellation = true;
 			_bw.DoWork += bw_DoWork;
@@ -127,19 +129,25 @@ namespace VixenApplication
 			int profileCount = profile.GetSetting(XMLProfileSettings.SettingType.Profiles, "ProfileCount", 0);
 			if (profileCount == 0)
 			{
-				MessageBox.Show(@"Unable to locate any profiles.");
-				return;
-			}
-
-			for (int i = 0; i < profileCount; i++)
-			{
 				var item = new ProfileItem
 				{
-					Name = profile.GetSetting(XMLProfileSettings.SettingType.Profiles, "Profile" + i.ToString() + "/Name", ""),
-					DataFolder =
-						profile.GetSetting(XMLProfileSettings.SettingType.Profiles, "Profile" + i.ToString() + "/DataFolder", "")
+					Name = "Default",
+					DataFolder = DataProfileForm.DefaultFolder
 				};
 				comboBoxProfiles.Items.Add(item);
+			}
+			else
+			{
+				for (int i = 0; i < profileCount; i++)
+				{
+					var item = new ProfileItem
+					{
+						Name = profile.GetSetting(XMLProfileSettings.SettingType.Profiles, "Profile" + i.ToString() + "/Name", ""),
+						DataFolder =
+							profile.GetSetting(XMLProfileSettings.SettingType.Profiles, "Profile" + i.ToString() + "/DataFolder", "")
+					};
+					comboBoxProfiles.Items.Add(item);
+				}
 			}
 			comboBoxProfiles.SelectedIndex = 0;
 			textBoxFileName.Text=@"VixenProfile";
