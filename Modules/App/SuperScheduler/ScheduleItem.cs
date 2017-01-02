@@ -143,7 +143,7 @@ namespace VixenModules.App.SuperScheduler
 
 				if (result < StartTime)
 				{
-					result = _endTime.AddDays(1);
+					result = result.AddDays(1);
 				}
 				return result;
 			}
@@ -276,8 +276,16 @@ namespace VixenModules.App.SuperScheduler
 					ScheduleExecutor.AddSchedulerLogEntry(Show.Name, "Stopping action: " + RunningActions[i].ShowItem.Name);
 					RunningActions[i].Stop();
 				}
-				Show.ReleaseAllActions();
-				ScheduleExecutor.AddSchedulerLogEntry(Show.Name, "Show stopped immediately");
+				if (Show != null)
+				{
+					Show.ReleaseAllActions();
+					ScheduleExecutor.AddSchedulerLogEntry(Show.Name, "Show stopped immediately");
+				}
+				else
+				{
+					ScheduleExecutor.AddSchedulerLogEntry("No show selected", "Nothing to stop.");
+				}
+				
 			}
 		}
 
@@ -299,12 +307,20 @@ namespace VixenModules.App.SuperScheduler
 			if (tokenSourcePreProcessAll == null || tokenSourcePreProcessAll.IsCancellationRequested)
 				tokenSourcePreProcessAll = new CancellationTokenSource();
 
-			var preProcessTask = new Task(a => PreProcessActionTask(),null, tokenSourcePreProcessAll.Token);
-			preProcessTask.ContinueWith(task => BeginStartup());
+			var loadSequencesTask = new Task(load => LoadShowSequences(), null, tokenSourcePreProcessAll.Token);
+			
+			var preProcessTask = loadSequencesTask.ContinueWith(a => PreProcessActionTask(),tokenSourcePreProcessAll.Token);
 
-			preProcessTask.Start();
+			preProcessTask.ContinueWith(task => BeginStartup(), tokenSourcePreProcessAll.Token);
 
-			//BeginStartup();
+			loadSequencesTask.Start();
+
+		}
+
+		private void LoadShowSequences()
+		{
+			ScheduleExecutor.AddSchedulerLogEntry(Show.Name, "Loading Sequences");
+			Show.LoadShowSequencesIntoShowItems(ShowItemType.All);
 		}
 
 		private void PreProcessActionTask()
