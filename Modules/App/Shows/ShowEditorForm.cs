@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -83,8 +82,26 @@ namespace VixenModules.App.Shows
 		{
 			ShowData.Name = textBoxShowName.Text;
 			UpdateListViewItems();
-			DialogResult = System.Windows.Forms.DialogResult.OK;
-			Close();
+
+			if (ValidateShow())
+			{
+				DialogResult = DialogResult.OK;
+				Close();
+			}
+			
+		}
+
+		private bool ValidateShow()
+		{
+			if (!ShowData.GetItems(ShowItemType.Sequential).Any())
+			{
+				var messageBox = new MessageBoxForm("You must have at least one sequential item defined for a valid show.", "Show Error", MessageBoxButtons.OK,
+					SystemIcons.Error);
+				messageBox.ShowDialog();
+				return false;
+			}
+
+			return true;
 		}
 
 		public void PopulateItemList(ShowItem selectedItem)

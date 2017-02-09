@@ -5,7 +5,6 @@ using Vixen.Module;
 using System;
 using System.ComponentModel;
 using System.Drawing;
-using System.Data;
 using System.Text;
 using System.Windows.Forms;
 using Vixen.Sys;
@@ -142,15 +141,6 @@ namespace VixenModules.App.Shows
 				}
 			}
 			return currentAction;
-		}
-
-		[NonSerialized]
-		private ISequence _sequence;
-
-		public ISequence Sequence
-		{
-			get { return _sequence; } 
-			set { _sequence = value; }
 		}
 
 		public object Clone()
