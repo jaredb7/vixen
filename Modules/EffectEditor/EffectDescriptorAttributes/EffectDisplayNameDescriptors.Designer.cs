@@ -116,6 +116,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Blade Type.
+        /// </summary>
+        internal static string BladeType {
+            get {
+                return ResourceManager.GetString("BladeType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Blend.
         /// </summary>
         internal static string Blend {
@@ -251,6 +260,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Color Type.
+        /// </summary>
+        internal static string ColorType {
+            get {
+                return ResourceManager.GetString("ColorType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Coverage.
         /// </summary>
         internal static string Coverage {
@@ -368,6 +386,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Flake Type.
+        /// </summary>
+        internal static string FlakeType {
+            get {
+                return ResourceManager.GetString("FlakeType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Flicker.
         /// </summary>
         internal static string FlickerPercent {
@@ -400,6 +427,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string Gain {
             get {
                 return ResourceManager.GetString("Gain", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Garland Type.
+        /// </summary>
+        internal static string GarlandType {
+            get {
+                return ResourceManager.GetString("GarlandType", resourceCulture);
             }
         }
         
@@ -503,7 +539,16 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Individual Elements.
+        ///   Looks up a localized string similar to Include 45Pt.
+        /// </summary>
+        internal static string Include45Pt {
+            get {
+                return ResourceManager.GetString("Include45Pt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Choose Effect Depth.
         /// </summary>
         internal static string IndividualElements {
             get {
@@ -566,11 +611,29 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Max Angle.
+        /// </summary>
+        internal static string MaxAngle {
+            get {
+                return ResourceManager.GetString("MaxAngle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Max.
         /// </summary>
         internal static string MaxBrightness {
             get {
                 return ResourceManager.GetString("MaxBrightness", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Max Direction.
+        /// </summary>
+        internal static string MaxDirection {
+            get {
+                return ResourceManager.GetString("MaxDirection", resourceCulture);
             }
         }
         
@@ -584,11 +647,29 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Min Angle.
+        /// </summary>
+        internal static string MinAngle {
+            get {
+                return ResourceManager.GetString("MinAngle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Min.
         /// </summary>
         internal static string MinBrightness {
             get {
                 return ResourceManager.GetString("MinBrightness", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Min Direction.
+        /// </summary>
+        internal static string MinDirection {
+            get {
+                return ResourceManager.GetString("MinDirection", resourceCulture);
             }
         }
         
@@ -611,7 +692,16 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to String Orientation.
+        ///   Looks up a localized string similar to Movement Type.
+        /// </summary>
+        internal static string MovementType {
+            get {
+                return ResourceManager.GetString("MovementType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Orientation.
         /// </summary>
         internal static string Orientation {
             get {
@@ -710,6 +800,33 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Random Position.
+        /// </summary>
+        internal static string RandomPosition {
+            get {
+                return ResourceManager.GetString("RandomPosition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Random Speed.
+        /// </summary>
+        internal static string RandomSpeed {
+            get {
+                return ResourceManager.GetString("RandomSpeed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Random Intensity.
+        /// </summary>
+        internal static string RandomIntensity {
+            get {
+                return ResourceManager.GetString("RandomIntensity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Repeat.
         /// </summary>
         internal static string Repeat {
@@ -782,11 +899,11 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Snowflake Type.
+        ///   Looks up a localized string similar to Spacing.
         /// </summary>
-        internal static string SnowflakeType {
+        internal static string Spacing {
             get {
-                return ResourceManager.GetString("SnowflakeType", resourceCulture);
+                return ResourceManager.GetString("Spacing", resourceCulture);
             }
         }
         
@@ -809,6 +926,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Speed Variation.
+        /// </summary>
+        internal static string SpeedVariation {
+            get {
+                return ResourceManager.GetString("SpeedVariation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Static Effect.
         /// </summary>
         internal static string StaticEffect {
@@ -823,6 +949,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string StringCount {
             get {
                 return ResourceManager.GetString("StringCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tail Length.
+        /// </summary>
+        internal static string TailLength {
+            get {
+                return ResourceManager.GetString("TailLength", resourceCulture);
             }
         }
         
@@ -922,6 +1057,24 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string WipeCount {
             get {
                 return ResourceManager.GetString("WipeCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Wipe Off.
+        /// </summary>
+        internal static string WipeOff {
+            get {
+                return ResourceManager.GetString("WipeOff", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Wipe On.
+        /// </summary>
+        internal static string WipeOn {
+            get {
+                return ResourceManager.GetString("WipeOn", resourceCulture);
             }
         }
         

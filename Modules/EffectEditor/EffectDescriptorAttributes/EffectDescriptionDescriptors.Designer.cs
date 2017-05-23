@@ -62,6 +62,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Controls whether each individual element is alternated independantly or controlled by the depth of the effect..
+        /// </summary>
+        internal static string AlternatingDepth {
+            get {
+                return ResourceManager.GetString("AlternatingDepth", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Controls the amount of background chunks..
         /// </summary>
         internal static string BackgroundChunks {
@@ -98,6 +107,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Determines the look of the blade..
+        /// </summary>
+        internal static string BladeType {
+            get {
+                return ResourceManager.GetString("BladeType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Applies the gradient blend vertically..
         /// </summary>
         internal static string Blend {
@@ -125,6 +143,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Configures the size of the hub or hole in the center of the Pinwheel..
+        /// </summary>
+        internal static string CenterHub {
+            get {
+                return ResourceManager.GetString("CenterHub", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Moves the text into view and stops it in the center..
         /// </summary>
         internal static string CenterStop {
@@ -139,6 +166,24 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string CenterText {
             get {
                 return ResourceManager.GetString("CenterText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Controls the center positioning of the effect in the horizontal plane..
+        /// </summary>
+        internal static string CenterX {
+            get {
+                return ResourceManager.GetString("CenterX", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Controls the center positioning of the effect in the vertical plane..
+        /// </summary>
+        internal static string CenterY {
+            get {
+                return ResourceManager.GetString("CenterY", resourceCulture);
             }
         }
         
@@ -175,6 +220,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string ColorScheme {
             get {
                 return ResourceManager.GetString("ColorScheme", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Controls the Type of Color..
+        /// </summary>
+        internal static string ColorType {
+            get {
+                return ResourceManager.GetString("ColorType", resourceCulture);
             }
         }
         
@@ -278,6 +332,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Controls the type of snowflake..
+        /// </summary>
+        internal static string FlakeType {
+            get {
+                return ResourceManager.GetString("FlakeType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Sets flicker frequency in changes per second..
         /// </summary>
         internal static string FlickerFrequency {
@@ -310,6 +373,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string FramesPerSecond {
             get {
                 return ResourceManager.GetString("FramesPerSecond", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Changes the garland type..
+        /// </summary>
+        internal static string GarlandType {
+            get {
+                return ResourceManager.GetString("GarlandType", resourceCulture);
             }
         }
         
@@ -395,6 +467,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Include 45 Point Flakes..
+        /// </summary>
+        internal static string Include45Pt {
+            get {
+                return ResourceManager.GetString("Include45Pt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Specifies how often the effect should switch in milliseconds..
         /// </summary>
         internal static string Interval {
@@ -431,11 +512,38 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Max angle the Snowflake moves..
+        /// </summary>
+        internal static string MaxAngle {
+            get {
+                return ResourceManager.GetString("MaxAngle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Controls the maximum brightness of a pulse..
         /// </summary>
         internal static string MaxBrightness {
             get {
                 return ResourceManager.GetString("MaxBrightness", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Max Direction in Degrees..
+        /// </summary>
+        internal static string MaxDirection {
+            get {
+                return ResourceManager.GetString("MaxDirection", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Max angle the Meteor moves..
+        /// </summary>
+        internal static string MaxMeteorAngle {
+            get {
+                return ResourceManager.GetString("MaxMeteorAngle", resourceCulture);
             }
         }
         
@@ -449,6 +557,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Min angle the Snowflake moves..
+        /// </summary>
+        internal static string MinAngle {
+            get {
+                return ResourceManager.GetString("MinAngle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Controls the minimum brightness of a pulse..
         /// </summary>
         internal static string MinBrightness {
@@ -458,11 +575,38 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Min Direction in Degrees..
+        /// </summary>
+        internal static string MinDirection {
+            get {
+                return ResourceManager.GetString("MinDirection", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Controls the default brightness of the background in the effect. Sometimes a zero value may be necesary to get certain behaviors in layer mixing..
         /// </summary>
         internal static string MinimumBrightness {
             get {
                 return ResourceManager.GetString("MinimumBrightness", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Min angle the Meteor moves..
+        /// </summary>
+        internal static string MinMeteorAngle {
+            get {
+                return ResourceManager.GetString("MinMeteorAngle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Controls the  Type of Movement..
+        /// </summary>
+        internal static string MovementType {
+            get {
+                return ResourceManager.GetString("MovementType", resourceCulture);
             }
         }
         
@@ -557,6 +701,42 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The radius of the circle over the time of the effect..
+        /// </summary>
+        internal static string RadiusCurve {
+            get {
+                return ResourceManager.GetString("RadiusCurve", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Chnages the Intensity for each SnowFlake..
+        /// </summary>
+        internal static string RandomIntensity {
+            get {
+                return ResourceManager.GetString("RandomIntensity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Creates new Meteors at a Random Position.
+        /// </summary>
+        internal static string RandomPosition {
+            get {
+                return ResourceManager.GetString("RandomPosition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enables Random Speed settings..
+        /// </summary>
+        internal static string RandomSpeed {
+            get {
+                return ResourceManager.GetString("RandomSpeed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Controls the number of times the color pattern repeats within the pattern..
         /// </summary>
         internal static string Repeat {
@@ -647,11 +827,20 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Controls the type of snowflake..
+        ///   Looks up a localized string similar to Adjusts the space between garlands..
         /// </summary>
-        internal static string SnowflakeType {
+        internal static string Spacing {
             get {
-                return ResourceManager.GetString("SnowflakeType", resourceCulture);
+                return ResourceManager.GetString("Spacing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Randomly adjust the Speed around the Speed level by the amount of variation...
+        /// </summary>
+        internal static string SpeedVariation {
+            get {
+                return ResourceManager.GetString("SpeedVariation", resourceCulture);
             }
         }
         
@@ -688,6 +877,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string StringCount {
             get {
                 return ResourceManager.GetString("StringCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Controls the amount of TailLength..
+        /// </summary>
+        internal static string TailLength {
+            get {
+                return ResourceManager.GetString("TailLength", resourceCulture);
             }
         }
         
@@ -755,7 +953,7 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Controls whether each individual element is twinkled independantly or all at once..
+        ///   Looks up a localized string similar to Controls whether each individual element is twinkled independantly or controled by the depth of the effect..
         /// </summary>
         internal static string TwinkleDepth {
             get {
@@ -778,6 +976,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string TwinklePulseTimeVariation {
             get {
                 return ResourceManager.GetString("TwinklePulseTimeVariation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Configures the amount of rotation or twist the Pinwheel arm has..
+        /// </summary>
+        internal static string Twist {
+            get {
+                return ResourceManager.GetString("Twist", resourceCulture);
             }
         }
         
@@ -805,6 +1012,24 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string VerticalBlend {
             get {
                 return ResourceManager.GetString("VerticalBlend", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Controls how the wave accelerates out from the center over time. .
+        /// </summary>
+        internal static string WaveAcceleration {
+            get {
+                return ResourceManager.GetString("WaveAcceleration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The width over time of the effect..
+        /// </summary>
+        internal static string WidthCurve {
+            get {
+                return ResourceManager.GetString("WidthCurve", resourceCulture);
             }
         }
         
