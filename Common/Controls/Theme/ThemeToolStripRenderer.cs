@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using System.Xml.Serialization;
@@ -17,6 +18,80 @@ namespace Common.Controls.Theme
 		{
 			e.TextColor = ThemeColorTable.ForeColor;
 			base.OnRenderItemText(e);
+		}
+		protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e)
+		{
+			ToolStripItem toolStripItem = e.Item;
+			if (toolStripItem is ToolStripDropDownItem)
+			{
+				Graphics g = e.Graphics;
+				Rectangle dropDownRect = e.ArrowRectangle;
+				using (Brush brush = new SolidBrush(toolStripItem.Enabled ? ThemeColorTable.ForeColor : SystemColors.ControlDark))
+				{
+					Point middle = new Point(dropDownRect.Left + dropDownRect.Width / 2, dropDownRect.Top + dropDownRect.Height / 2);
+					Point[] arrow;
+					int hor=2 , ver = 2;
+
+					switch (e.Direction)
+					{
+						case ArrowDirection.Up:
+
+							arrow = new Point[] {
+								new Point(middle.X - hor, middle.Y + 1),
+								new Point(middle.X + hor + 1, middle.Y + 1),
+								new Point(middle.X, middle.Y - ver)};
+
+							break;
+						case ArrowDirection.Left:
+							arrow = new Point[] {
+								new Point(middle.X + hor, middle.Y - 2 * ver),
+								new Point(middle.X + hor, middle.Y + 2 * ver),
+								new Point(middle.X - hor, middle.Y)};
+
+							break;
+						case ArrowDirection.Right:
+							arrow = new Point[] {
+								new Point(middle.X - hor, middle.Y - 2 * ver),
+								new Point(middle.X - hor, middle.Y + 2 * ver),
+								new Point(middle.X + hor, middle.Y)};
+
+							break;
+						default:
+							arrow = new Point[] {
+								new Point(middle.X - hor, middle.Y - 1),
+								new Point(middle.X + hor + 1, middle.Y - 1),
+								new Point(middle.X, middle.Y + ver) };
+							break;
+					}
+					g.FillPolygon(brush, arrow);
+				}
+			}
+			else
+			{
+				base.OnRenderArrow(e);
+			}
+		}
+
+		private List<Point> GetArrow(ArrowDirection direction, Rectangle r)
+		{
+			List<Point> points = new List<Point>();
+			
+			switch (direction)
+			{
+				case ArrowDirection.Down:
+					points.Add(new Point(r.Left - 2, r.Height / 2 - 3));
+					points.Add(new Point(r.Right + 2, r.Height / 2 - 3));
+					points.Add(new Point(r.Left + (r.Width / 2), r.Height / 2 + 3));
+					break;
+				case ArrowDirection.Right:
+					points.Add(new Point(r.Left - 2, r.Height / 2 - 3));
+					points.Add(new Point(r.Right + 2, r.Height / 2 - 3));
+					points.Add(new Point(r.Left + (r.Width / 2),
+						r.Height / 2 + 3));
+					break;
+			}
+
+			return points;
 		}
 
 		protected override void OnRenderSplitButtonBackground(ToolStripItemRenderEventArgs e)
@@ -114,19 +189,9 @@ namespace Common.Controls.Theme
 				RenderSelectedButtonFill(bounds, g);
 			}
 			
-			GraphicsPath path = new GraphicsPath();
-			path.AddEllipse(bounds.X, bounds.Y, bounds.Width - 1, bounds.Height - 1);
-			using (PathGradientBrush pthGrBrush = new PathGradientBrush(path))
-			{
-				// Set the color at the center of the path.
-				pthGrBrush.CenterColor = ColorTable.ButtonPressedGradientBegin;
-
-				Color[] colors = { item.Selected?ColorTable.ButtonSelectedGradientEnd:ColorTable.ButtonPressedGradientEnd };
-				pthGrBrush.SurroundColors = colors;
-
-				g.FillEllipse(pthGrBrush, bounds.X, bounds.Y, bounds.Width - 1, bounds.Height - 1);
-			}
-			
+			// Set the color of border when item is selected.
+			Pen pen = new Pen(ThemeColorTable.ForeColor);
+			g.DrawRectangle(pen, bounds.X, bounds.Y, bounds.Width - 1, bounds.Height - 1);
 			
 		}
 
