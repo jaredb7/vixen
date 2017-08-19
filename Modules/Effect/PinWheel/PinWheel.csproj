@@ -41,7 +41,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
-    <OutputPath>..\..\..\Debug64\Modules\Effect\</OutputPath>
+    <OutputPath>..\..\..\Debug\Modules\Effect\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>false</Optimize>
     <DebugType>pdbonly</DebugType>
@@ -61,6 +61,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MovementType.cs" />
+    <Compile Include="PinWheelBladeType.cs" />
     <Compile Include="PinWheelColorType.cs" />
     <Compile Include="PinWheelDescriptor.cs" />
     <Compile Include="PinWheelData.cs" />

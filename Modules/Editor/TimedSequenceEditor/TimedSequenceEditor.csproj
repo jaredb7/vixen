@@ -136,6 +136,12 @@
     <Compile Include="AutomaticMusicDetection.Designer.cs">
       <DependentUpon>AutomaticMusicDetection.cs</DependentUpon>
     </Compile>
+    <Compile Include="FindEffectForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FindEffectForm.Designer.cs">
+      <DependentUpon>FindEffectForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="BulkEffectMoveForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -269,6 +275,10 @@
     <Compile Include="Form_ToolPalette.Designer.cs">
       <DependentUpon>Form_ToolPalette.cs</DependentUpon>
     </Compile>
+    <Compile Include="Undo\MarksMovedUndoAction.cs" />
+    <Compile Include="Undo\MarksRemovedUndoAction.cs" />
+    <Compile Include="Undo\MarksAddedUndoAction .cs" />
+    <Compile Include="Undo\MarksAddedRemovedUndoAction.cs" />
     <Compile Include="Undo\EffectsAddedRemovedUndoAction.cs" />
     <Compile Include="Undo\EffectsAddedUndoAction.cs" />
     <Compile Include="Undo\EffectsLayerChangedUndoAction.cs" />
@@ -297,6 +307,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="AutomaticMusicDetection.resx">
       <DependentUpon>AutomaticMusicDetection.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FindEffectForm.resx">
+      <DependentUpon>FindEffectForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="BulkEffectMoveForm.resx">
       <DependentUpon>BulkEffectMoveForm.cs</DependentUpon>
