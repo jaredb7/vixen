@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -30,7 +31,8 @@ namespace Common.Controls.Theme
 				{
 					Point middle = new Point(dropDownRect.Left + dropDownRect.Width / 2, dropDownRect.Top + dropDownRect.Height / 2);
 					Point[] arrow;
-					int hor=2 , ver = 2;
+					int hor = (int) (2 * ScalingTools.GetScaleFactor());
+					int ver = hor;
 
 					switch (e.Direction)
 					{
@@ -70,28 +72,6 @@ namespace Common.Controls.Theme
 			{
 				base.OnRenderArrow(e);
 			}
-		}
-
-		private List<Point> GetArrow(ArrowDirection direction, Rectangle r)
-		{
-			List<Point> points = new List<Point>();
-			
-			switch (direction)
-			{
-				case ArrowDirection.Down:
-					points.Add(new Point(r.Left - 2, r.Height / 2 - 3));
-					points.Add(new Point(r.Right + 2, r.Height / 2 - 3));
-					points.Add(new Point(r.Left + (r.Width / 2), r.Height / 2 + 3));
-					break;
-				case ArrowDirection.Right:
-					points.Add(new Point(r.Left - 2, r.Height / 2 - 3));
-					points.Add(new Point(r.Right + 2, r.Height / 2 - 3));
-					points.Add(new Point(r.Left + (r.Width / 2),
-						r.Height / 2 + 3));
-					break;
-			}
-
-			return points;
 		}
 
 		protected override void OnRenderSplitButtonBackground(ToolStripItemRenderEventArgs e)
@@ -208,11 +188,21 @@ namespace Common.Controls.Theme
 				}
 			}
 		}
+		
+		protected override void OnRenderItemImage(ToolStripItemImageRenderEventArgs e)
+		{
+			base.OnRenderItemImage(e);
+			var menuItem = e.Item as ToolStripMenuItem;
+			if (menuItem != null && menuItem.CheckOnClick && menuItem.Checked && e.ImageRectangle != Rectangle.Empty)
+			{
+				Pen p = new Pen(ThemeColorTable.HighlightColor, 1);
+				e.Graphics.DrawRectangle(p, 2, 0, e.ImageRectangle.Width + 5, e.ImageRectangle.Height + 5);
+			}
+		}
 
 		protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
 		{
-			int iconSize = (int)(24 * ScalingTools.GetScaleFactor());
-			Image image = Tools.GetIcon(Resources.Properties.Resources.check_mark, iconSize);
+			Image image = Tools.GetIcon(Resources.Properties.Resources.check_mark, e.ImageRectangle.Height);
 			Rectangle imageRect = e.ImageRectangle;
 
 
@@ -222,7 +212,7 @@ namespace Common.Controls.Theme
 				{
 					image = CreateDisabledImage(image);
 				}
-
+				
 				e.Graphics.DrawImage(image, imageRect, new Rectangle(Point.Empty, imageRect.Size), GraphicsUnit.Pixel);
 			}
 
