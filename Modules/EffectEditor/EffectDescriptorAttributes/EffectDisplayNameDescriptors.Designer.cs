@@ -242,6 +242,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Build-up Speed.
+        /// </summary>
+        internal static string BuildUpSpeed {
+            get {
+                return ResourceManager.GetString("BuildUpSpeed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Butterfly Type.
         /// </summary>
         internal static string ButterflyType {
@@ -296,15 +305,6 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Collide.
-        /// </summary>
-        internal static string Collide {
-            get {
-                return ResourceManager.GetString("Collide", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Circles.
         /// </summary>
         internal static string CircleCount {
@@ -328,6 +328,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string CircleFill {
             get {
                 return ResourceManager.GetString("CircleFill", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Collide.
+        /// </summary>
+        internal static string Collide {
+            get {
+                return ResourceManager.GetString("Collide", resourceCulture);
             }
         }
         
@@ -463,6 +472,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string Direction {
             get {
                 return ResourceManager.GetString("Direction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ground Level.
+        /// </summary>
+        internal static string EnableGroundLevel {
+            get {
+                return ResourceManager.GetString("EnableGroundLevel", resourceCulture);
             }
         }
         
@@ -706,6 +724,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string IndividualElements {
             get {
                 return ResourceManager.GetString("IndividualElements", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Initial Build-up.
+        /// </summary>
+        internal static string InitialBuildUp {
+            get {
+                return ResourceManager.GetString("InitialBuildUp", resourceCulture);
             }
         }
         
@@ -1138,6 +1165,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string Size {
             get {
                 return ResourceManager.GetString("Size", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Snow Build-up.
+        /// </summary>
+        internal static string SnowBuildUp {
+            get {
+                return ResourceManager.GetString("SnowBuildUp", resourceCulture);
             }
         }
         

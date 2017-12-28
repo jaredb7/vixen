@@ -233,6 +233,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Adjusts how fast the build-up of Snow is..
+        /// </summary>
+        internal static string BuildUpSpeed {
+            get {
+                return ResourceManager.GetString("BuildUpSpeed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Controls the type of pattern..
         /// </summary>
         internal static string ButterflyType {
@@ -305,15 +314,6 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Change the ball direction when balls collide..
-        /// </summary>
-        internal static string Collide {
-            get {
-                return ResourceManager.GetString("Collide", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Adjust the number of Circles or radial patterns in the effect..
         /// </summary>
         internal static string CircleCount {
@@ -337,6 +337,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string CircleFill {
             get {
                 return ResourceManager.GetString("CircleFill", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Change the ball direction when balls collide..
+        /// </summary>
+        internal static string Collide {
+            get {
+                return ResourceManager.GetString("Collide", resourceCulture);
             }
         }
         
@@ -409,6 +418,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string EffectType {
             get {
                 return ResourceManager.GetString("EffectType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Adds a Ground level for the Meteors to hit..
+        /// </summary>
+        internal static string EnableGroundLevel {
+            get {
+                return ResourceManager.GetString("EnableGroundLevel", resourceCulture);
             }
         }
         
@@ -625,6 +643,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string Include45Pt {
             get {
                 return ResourceManager.GetString("Include45Pt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sets the height level of the Initial Snow build-up at the bottom of the element..
+        /// </summary>
+        internal static string InitialBuildUp {
+            get {
+                return ResourceManager.GetString("InitialBuildUp", resourceCulture);
             }
         }
         
@@ -1066,6 +1093,15 @@ namespace VixenModules.EffectEditor.EffectDescriptorAttributes {
         internal static string Size {
             get {
                 return ResourceManager.GetString("Size", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Allows the Snowflakes to build-up at the bottom of the Element..
+        /// </summary>
+        internal static string SnowBuildUp {
+            get {
+                return ResourceManager.GetString("SnowBuildUp", resourceCulture);
             }
         }
         
