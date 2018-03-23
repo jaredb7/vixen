@@ -75,7 +75,7 @@
     </Reference>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <HintPath>..\..\packages\NLog.4.4.12\lib\net45\NLog.dll</HintPath>
-      <Private>True</Private>
+      <Private>False</Private>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -114,6 +114,9 @@
     </Compile>
     <Compile Include="NameGeneration\SubstitutionRenamer.Designer.cs">
       <DependentUpon>SubstitutionRenamer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="NumericTextBox.cs">
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -192,9 +195,6 @@
     </Compile>
     <Compile Include="ElementTree.Designer.cs">
       <DependentUpon>ElementTree.cs</DependentUpon>
-    </Compile>
-    <Compile Include="NumericTextBox.cs">
-      <SubType>Component</SubType>
     </Compile>
     <Compile Include="PictureComboBox.cs">
       <SubType>Component</SubType>
