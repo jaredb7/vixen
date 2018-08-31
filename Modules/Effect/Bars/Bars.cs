@@ -18,6 +18,8 @@ namespace VixenModules.Effect.Bars
 	public class Bars:PixelEffectBase
 	{
 		private BarsData _data;
+		private double _position;
+		private bool _negPosition;
 
 		public Bars()
 		{
@@ -76,11 +78,28 @@ namespace VixenModules.Effect.Bars
 
 		[Value]
 		[ProviderCategory(@"Config", 1)]
+		[ProviderDisplayName(@"MovementType")]
+		[ProviderDescription(@"MovementType")]
+		[PropertyOrder(1)]
+		public MovementType MovementType
+		{
+			get { return _data.MovementType; }
+			set
+			{
+				_data.MovementType = value;
+				IsDirty = true;
+				UpdateMovementTypeAttribute();
+				OnPropertyChanged();
+			}
+		}
+
+		[Value]
+		[ProviderCategory(@"Config", 1)]
 		[ProviderDisplayName(@"Iterations")]
 		[ProviderDescription(@"Iterations")]
 		[PropertyEditor("SliderEditor")]
-		[NumberRange(1, 20, 1)]
-		[PropertyOrder(1)]
+		[NumberRange(0, 20, 1)]
+		[PropertyOrder(2)]
 		public int Speed
 		{
 			get { return _data.Speed; }
@@ -94,11 +113,27 @@ namespace VixenModules.Effect.Bars
 
 		[Value]
 		[ProviderCategory(@"Config", 1)]
+		[ProviderDisplayName(@"Speed")]
+		[ProviderDescription(@"Speed")]
+		[PropertyOrder(3)]
+		public Curve SpeedCurve
+		{
+			get { return _data.SpeedCurve; }
+			set
+			{
+				_data.SpeedCurve = value;
+				IsDirty = true;
+				OnPropertyChanged();
+			}
+		}
+
+		[Value]
+		[ProviderCategory(@"Config", 1)]
 		[ProviderDisplayName(@"Repeat")]
 		[ProviderDescription(@"Repeat")]
 		[PropertyEditor("SliderEditor")]
 		[NumberRange(1, 10, 1)]
-		[PropertyOrder(2)]
+		[PropertyOrder(4)]
 		public int Repeat
 		{
 			get { return _data.Repeat; }
@@ -114,7 +149,7 @@ namespace VixenModules.Effect.Bars
 		[ProviderCategory(@"Config", 1)]
 		[ProviderDisplayName(@"Highlight")]
 		[ProviderDescription(@"Highlight")]
-		[PropertyOrder(4)]
+		[PropertyOrder(5)]
 		public bool Highlight
 		{
 			get { return _data.Highlight; }
@@ -130,7 +165,7 @@ namespace VixenModules.Effect.Bars
 		[ProviderCategory(@"Config", 1)]
 		[ProviderDisplayName(@"Show3D")]
 		[ProviderDescription(@"Show3D")]
-		[PropertyOrder(5)]
+		[PropertyOrder(6)]
 		public bool Show3D
 		{
 			get { return _data.Show3D; }
@@ -212,11 +247,28 @@ namespace VixenModules.Effect.Bars
 		private void InitAllAttributes()
 		{
 			UpdateStringOrientationAttributes(true);
+			UpdateMovementTypeAttribute(false);
+			TypeDescriptor.Refresh(this);
 		}
 
 		protected override EffectTypeModuleData EffectModuleData
 		{
 			get { return _data; }
+		}
+
+		private void UpdateMovementTypeAttribute(bool refresh = true)
+		{
+			Dictionary<string, bool> propertyStates = new Dictionary<string, bool>(2)
+			{
+				{ "SpeedCurve", MovementType == MovementType.Speed},
+				
+				{ "Speed", MovementType != MovementType.Speed}
+			};
+			SetBrowsable(propertyStates);
+			if (refresh)
+			{
+				TypeDescriptor.Refresh(this);
+			}
 		}
 
 		protected override void SetupRender()
@@ -236,13 +288,31 @@ namespace VixenModules.Effect.Bars
 			{
 				RenderEffectByLocation(frame, buffer);
 			}
-
+			
 			int x, y, n, colorIdx;
 			int colorcnt = Colors.Count();
 			int barCount = Repeat * colorcnt;
-			double position = (GetEffectTimeIntervalPosition(frame) * Speed) % 1;
+			double intervalPosFactor = GetEffectTimeIntervalPosition(frame) * 100;
+
+			_negPosition = false;
+
+			if (MovementType == MovementType.Iterations)
+			{
+				_position = (GetEffectTimeIntervalPosition(frame) * Speed) % 1;
+			}
+			else
+			{
+				if (frame == 0) _position = CalculateSpeed(intervalPosFactor);
+				_position += CalculateSpeed(intervalPosFactor) / 100;
+				if (_position < 0)
+				{
+					_negPosition = true;
+					_position = -_position;
+				}
+			}
+
 			if (barCount < 1) barCount = 1;
-			double level = LevelCurve.GetValue(GetEffectTimeIntervalPosition(frame) * 100) / 100;
+			double level = LevelCurve.GetValue(intervalPosFactor) / 100;
 
 			if (Direction < BarDirection.Left || Direction == BarDirection.AlternateUp || Direction == BarDirection.AlternateDown)
 			{
@@ -251,10 +321,10 @@ namespace VixenModules.Effect.Bars
 				int halfHt = BufferHt / 2;
 				int blockHt = colorcnt * barHt;
 				if (blockHt < 1) blockHt = 1;
-				int fOffset = (int) (position*blockHt*Repeat);// : Speed * frame / 4 % blockHt);
+				int fOffset = (int) (_position*blockHt*Repeat);// : Speed * frame / 4 % blockHt);
 				if(Direction == BarDirection.AlternateUp || Direction == BarDirection.AlternateDown)
 				{
-					fOffset = (int)(Math.Floor(position*barCount)*barHt);
+					fOffset = (int)(Math.Floor(_position*barCount)*barHt);
 				}
 				int indexAdjust = 1;
 				
@@ -263,51 +333,112 @@ namespace VixenModules.Effect.Bars
 					n = y + fOffset;
 					colorIdx = ((n + indexAdjust) % blockHt) / barHt;
 					//we need the integer division here to make things work
-					double colorPosition = ((double)(n + indexAdjust) / barHt) - ((n + indexAdjust) / barHt);
+					float colorPosition = ((n + indexAdjust) / barHt) - ((n + indexAdjust) / barHt);
 					Color c = Colors[colorIdx].GetColorAt(colorPosition);
-					var hsv = HSV.FromRGB(c);
-					if (Highlight && (n + indexAdjust) % barHt == 0) hsv.S = 0.0f;
-					if (Show3D) hsv.V *= (float)(barHt - (n + indexAdjust) % barHt - 1) / barHt;
-
-					hsv.V = hsv.V*level;
+					if (Highlight || Show3D)
+					{
+						var hsv = HSV.FromRGB(c);
+						if (Highlight && (n + indexAdjust) % barHt == 0) hsv.S = 0.0f;
+						if (Show3D) hsv.V *= (float) (barHt - (n + indexAdjust) % barHt - 1) / barHt;
+						hsv.V *= level;
+						c = hsv.ToRGB();
+					}
+					else
+					{
+						if (level < 1)
+						{
+							HSV hsv = HSV.FromRGB(c);
+							hsv.V *= level;
+							c = hsv.ToRGB();
+						}
+					}
 
 					switch (Direction)
 					{
 						case BarDirection.Down:
 						case BarDirection.AlternateDown:
-							// down
-							for (x = 0; x < BufferWi; x++)
-							{
-								frameBuffer.SetPixel(x, y, hsv);
-							}
-							break;
-						case BarDirection.Expand:
-							// expand
-							if (y <= halfHt)
+							// dow
+							if (_negPosition)
 							{
 								for (x = 0; x < BufferWi; x++)
 								{
-									frameBuffer.SetPixel(x, y, hsv);
-									frameBuffer.SetPixel(x, BufferHt - y - 1, hsv);
+									frameBuffer.SetPixel(x, BufferHt - y - 1, c);
+								}
+							}
+							else
+							{
+								for (x = 0; x < BufferWi; x++)
+								{
+									frameBuffer.SetPixel(x, y, c);
+								}
+							}
+
+							break;
+						case BarDirection.Expand:
+							// expand
+							if (_negPosition)
+							{
+								if (y <= halfHt)
+								{
+									for (x = 0; x < BufferWi; x++)
+									{
+										frameBuffer.SetPixel(x, y, c);
+										frameBuffer.SetPixel(x, BufferHt - y - 1, c);
+									}
+								}
+							}
+							else
+							{
+								if (y >= halfHt)
+								{
+									for (x = 0; x < BufferWi; x++)
+									{
+										frameBuffer.SetPixel(x, y, c);
+										frameBuffer.SetPixel(x, BufferHt - y - 1, c);
+									}
 								}
 							}
 							break;
 						case BarDirection.Compress:
 							// compress
-							if (y >= halfHt)
+							if (!_negPosition)
 							{
-								for (x = 0; x < BufferWi; x++)
+								if (y <= halfHt)
 								{
-									frameBuffer.SetPixel(x, y, hsv);
-									frameBuffer.SetPixel(x, BufferHt - y - 1, hsv);
+									for (x = 0; x < BufferWi; x++)
+									{
+										frameBuffer.SetPixel(x, y, c);
+										frameBuffer.SetPixel(x, BufferHt - y - 1, c);
+									}
+								}
+							}
+							else
+							{
+								if (y >= halfHt)
+								{
+									for (x = 0; x < BufferWi; x++)
+									{
+										frameBuffer.SetPixel(x, y, c);
+										frameBuffer.SetPixel(x, BufferHt - y - 1, c);
+									}
 								}
 							}
 							break;
 						default:
 							// up & AlternateUp
-							for (x = 0; x < BufferWi; x++)
+							if (!_negPosition)
 							{
-								frameBuffer.SetPixel(x, BufferHt - y - 1, hsv);
+								for (x = 0; x < BufferWi; x++)
+								{
+									frameBuffer.SetPixel(x, BufferHt - y - 1, c);
+								}
+							}
+							else
+							{
+								for (x = 0; x < BufferWi; x++)
+								{
+									frameBuffer.SetPixel(x, y, c);
+								}
 							}
 							break;
 					}
@@ -320,10 +451,10 @@ namespace VixenModules.Effect.Bars
 				int halfWi = BufferWi / 2;
 				int blockWi = colorcnt * barWi;
 				if (blockWi < 1) blockWi = 1;
-				int fOffset = (int)(position * blockWi * Repeat);
+				int fOffset = (int)(_position * blockWi * Repeat);
 				if (Direction > BarDirection.AlternateDown)
 				{
-					fOffset = (int)(Math.Floor(position * barCount) * barWi);
+					fOffset = (int)(Math.Floor(_position * barCount) * barWi);
 				} 
 				
 				for (x = 0; x < BufferWi; x++)
@@ -331,12 +462,26 @@ namespace VixenModules.Effect.Bars
 					n = x + fOffset;
 					colorIdx = ((n + 1) % blockWi) / barWi;
 					//we need the integer division here to make things work
-					double colorPosition = ((double)(n + 1) / barWi) - ((n + 1) / barWi);
+					float colorPosition = ((n + 1) / barWi) - ((n + 1) / barWi);
 					Color c = Colors[colorIdx].GetColorAt( colorPosition );
-					var hsv = HSV.FromRGB(c);
-					if (Highlight && n % barWi == 0) hsv.S = 0.0f;
-					if (Show3D) hsv.V *= (float)(barWi - n % barWi - 1) / barWi;
-					hsv.V = hsv.V * level;
+					if (Highlight || Show3D)
+					{
+						var hsv = HSV.FromRGB(c);
+						if (Highlight && n % barWi == 0) hsv.S = 0.0f;
+						if (Show3D) hsv.V *= (float)(barWi - n % barWi - 1) / barWi;
+						hsv.V *= level;
+						c = hsv.ToRGB();
+					}
+					else
+					{
+						if (level < 1)
+						{
+							HSV hsv = HSV.FromRGB(c);
+							hsv.V *= level;
+							c = hsv.ToRGB();
+						}
+					}
+
 					switch (Direction)
 					{
 						case BarDirection.Right:
@@ -344,7 +489,7 @@ namespace VixenModules.Effect.Bars
 							// right
 							for (y = 0; y < BufferHt; y++)
 							{
-								frameBuffer.SetPixel(BufferWi - x - 1, y, hsv);
+								frameBuffer.SetPixel(BufferWi - x - 1, y, c);
 							}
 							break;
 						case BarDirection.HExpand:
@@ -353,8 +498,8 @@ namespace VixenModules.Effect.Bars
 							{
 								for (y = 0; y < BufferHt; y++)
 								{
-									frameBuffer.SetPixel(x, y, hsv);
-									frameBuffer.SetPixel(BufferWi - x - 1, y, hsv);
+									frameBuffer.SetPixel(x, y, c);
+									frameBuffer.SetPixel(BufferWi - x - 1, y, c);
 								}
 							}
 							break;
@@ -364,8 +509,8 @@ namespace VixenModules.Effect.Bars
 							{
 								for (y = 0; y < BufferHt; y++)
 								{
-									frameBuffer.SetPixel(x, y, hsv);
-									frameBuffer.SetPixel(BufferWi - x - 1, y, hsv);
+									frameBuffer.SetPixel(x, y, c);
+									frameBuffer.SetPixel(BufferWi - x - 1, y, c);
 								}
 							}
 							break;
@@ -373,7 +518,7 @@ namespace VixenModules.Effect.Bars
 							// left & AlternateLeft
 							for (y = 0; y < BufferHt; y++)
 							{
-								frameBuffer.SetPixel(x, y, hsv);
+								frameBuffer.SetPixel(x, y, c);
 							}
 							break;
 					}
@@ -386,8 +531,7 @@ namespace VixenModules.Effect.Bars
 			int colorcnt = Colors.Count();
 			int barCount = Repeat * colorcnt;
 			if (barCount < 1) barCount = 1;
-
-
+			
 			int barHt = BufferHt / barCount + 1;
 			if (barHt < 1) barHt = 1;
 			int blockHt = colorcnt * barHt;
@@ -436,18 +580,28 @@ namespace VixenModules.Effect.Bars
 			for (int frame = 0; frame < numFrames; frame++)
 			{
 				frameBuffer.CurrentFrame = frame;
-				double level = LevelCurve.GetValue(GetEffectTimeIntervalPosition(frame) * 100) / 100;
-				double position = (GetEffectTimeIntervalPosition(frame) * Speed) % 1;
+				double intervalPosFactor = GetEffectTimeIntervalPosition(frame) * 100;
+				double level = LevelCurve.GetValue(intervalPosFactor) / 100;
+				
+				if (MovementType == MovementType.Iterations)
+				{
+					_position = (GetEffectTimeIntervalPosition(frame) * Speed) % 1;
+				}
+				else
+				{
+					if (frame == 0) _position = CalculateSpeed(intervalPosFactor);
+					_position += CalculateSpeed(intervalPosFactor) / 100;
+				}
 
 				int n;
 				int colorIdx;
 				if (Direction < BarDirection.Left || Direction == BarDirection.AlternateUp || Direction == BarDirection.AlternateDown)
 				{
 					
-					int fOffset = (int)(position * blockHt * Repeat);// : Speed * frame / 4 % blockHt);
+					int fOffset = (int)(_position * blockHt * Repeat);// : Speed * frame / 4 % blockHt);
 					if (Direction == BarDirection.AlternateUp || Direction == BarDirection.AlternateDown)
 					{
-						fOffset = (int)(Math.Floor(position * barCount) * barHt);
+						fOffset = (int)(Math.Floor(_position * barCount) * barHt);
 					}
 					if (Direction == BarDirection.Down || Direction == BarDirection.AlternateDown || Direction == BarDirection.Expand)
 					{
@@ -468,11 +622,23 @@ namespace VixenModules.Effect.Bars
 						//we need the integer division here to make things work
 						double colorPosition = Math.Abs( (double)(n + indexAdjust) / barHt - (n + indexAdjust) / barHt );
 						Color c = Colors[colorIdx].GetColorAt(colorPosition);
-						var hsv = HSV.FromRGB(c);
-						if (Highlight && (n + indexAdjust) % barHt == 0) hsv.S = 0.0f;
-						if (Show3D) hsv.V *= (float)(barHt - (n + indexAdjust) % barHt - 1) / barHt;
-
-						hsv.V = hsv.V * level;
+						if (Highlight || Show3D)
+						{
+							var hsv = HSV.FromRGB(c);
+							if (Highlight && (n + indexAdjust) % barHt == 0) hsv.S = 0.0f;
+							if (Show3D) hsv.V *= (float)(barHt - (n + indexAdjust) % barHt - 1) / barHt;
+							hsv.V *= level;
+							c = hsv.ToRGB();
+						}
+						else
+						{
+							if (level < 1)
+							{
+								HSV hsv = HSV.FromRGB(c);
+								hsv.V *= level;
+								c = hsv.ToRGB();
+							}
+						}
 
 						switch (Direction)
 						{
@@ -483,7 +649,7 @@ namespace VixenModules.Effect.Bars
 								{
 									foreach (var elementLocation in elementLocations)
 									{
-										frameBuffer.SetPixel(elementLocation.X, y, hsv);
+										frameBuffer.SetPixel(elementLocation.X, y, c);
 									}
 									if (i == halfNodeCount & evenHalfCount)
 									{
@@ -492,7 +658,7 @@ namespace VixenModules.Effect.Bars
 									}
 									foreach (var elementLocation in reversedNodes[i])
 									{
-										frameBuffer.SetPixel(elementLocation.X, elementLocation.Y, hsv);
+										frameBuffer.SetPixel(elementLocation.X, elementLocation.Y, c);
 									}
 
 									i++;
@@ -505,7 +671,7 @@ namespace VixenModules.Effect.Bars
 							default:
 								foreach (var elementLocation in elementLocations)
 								{
-									frameBuffer.SetPixel(elementLocation.X, y, hsv);
+									frameBuffer.SetPixel(elementLocation.X, y, c);
 								}
 								break;
 						}
@@ -515,10 +681,10 @@ namespace VixenModules.Effect.Bars
 				else
 				{
 					
-					int fOffset = (int)(position * blockWi * Repeat);
+					int fOffset = (int)(_position * blockWi * Repeat);
 					if (Direction > BarDirection.AlternateDown)
 					{
-						fOffset = (int)(Math.Floor(position * barCount) * barWi);
+						fOffset = (int)(Math.Floor(_position * barCount) * barWi);
 					}
 					if (Direction == BarDirection.Right || Direction == BarDirection.AlternateRight || Direction == BarDirection.HCompress)
 					{
@@ -535,10 +701,25 @@ namespace VixenModules.Effect.Bars
 						//we need the integer division here to make things work
 						double colorPosition = Math.Abs(  (double)(n + 1) / barWi - (n + 1) / barWi );
 						Color c = Colors[colorIdx].GetColorAt(colorPosition);
-						var hsv = HSV.FromRGB(c);
-						if (Highlight && n % barWi == 0) hsv.S = 0.0f;
-						if (Show3D) hsv.V *= (float)(barWi - n % barWi - 1) / barWi;
-						hsv.V = hsv.V * level;
+
+						if (Highlight || Show3D)
+						{
+							var hsv = HSV.FromRGB(c);
+							if (Highlight && n % barWi == 0) hsv.S = 0.0f;
+							if (Show3D) hsv.V *= (float)(barWi - n % barWi - 1) / barWi;
+							hsv.V *= level;
+							c = hsv.ToRGB();
+						}
+						else
+						{
+							if (level < 1)
+							{
+								HSV hsv = HSV.FromRGB(c);
+								hsv.V *= level;
+								c = hsv.ToRGB();
+							}
+						}
+
 						switch (Direction)
 						{
 							case BarDirection.HExpand:
@@ -547,7 +728,7 @@ namespace VixenModules.Effect.Bars
 								{
 									foreach (var elementLocation in elementLocations)
 									{
-										frameBuffer.SetPixel(x, elementLocation.Y, hsv);
+										frameBuffer.SetPixel(x, elementLocation.Y, c);
 									}
 									if (i == halfNodeCount & evenHalfCount)
 									{
@@ -556,7 +737,7 @@ namespace VixenModules.Effect.Bars
 									}
 									foreach (var elementLocation in reversedNodes[i])
 									{
-										frameBuffer.SetPixel(elementLocation.X, elementLocation.Y, hsv);
+										frameBuffer.SetPixel(elementLocation.X, elementLocation.Y, c);
 									}
 
 									i++;
@@ -565,7 +746,7 @@ namespace VixenModules.Effect.Bars
 							default:
 								foreach (var elementLocation in elementLocations)
 								{
-									frameBuffer.SetPixel(x, elementLocation.Y, hsv);
+									frameBuffer.SetPixel(x, elementLocation.Y, c);
 								}
 								break;
 						}
@@ -574,8 +755,13 @@ namespace VixenModules.Effect.Bars
 				}
 
 			}
-			
+
 		}
-		
+
+		private double CalculateSpeed(double intervalPos)
+		{
+			return ScaleCurveToValue(SpeedCurve.GetValue(intervalPos), 15, -15);
+		}
+
 	}
 }

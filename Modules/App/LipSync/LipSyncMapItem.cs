@@ -3,11 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Windows.Forms;
-using Common.Controls.ColorManagement.ColorModels;
-using Vixen.Module;
-using Vixen.Module.App;
+using VixenModules.Property.Face;
 
 namespace VixenModules.App.LipSyncApp
 {
@@ -16,29 +12,29 @@ namespace VixenModules.App.LipSyncApp
 	{
 		public LipSyncMapItem()
 		{
-			PhonemeList = new Dictionary<string, Boolean>();
-			ElementColors = new Dictionary<PhonemeType, Color>();
+			PhonemeList = new Dictionary<string, Boolean>(StringComparer.OrdinalIgnoreCase);
+			FaceComponents = new Dictionary<FaceComponent, bool>();
 		}
 
 		public LipSyncMapItem(string name, int stringNum)
 		{
-			PhonemeList = new Dictionary<string, bool>();
+			PhonemeList = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
 			Name = name;
 			StringNum = stringNum;
 			ElementColor = Color.White;
 			ElementGuid = new Guid();
-			ElementColors = new Dictionary<PhonemeType, Color>();
+			FaceComponents = new Dictionary<FaceComponent, bool>();
 		}
 
 		public LipSyncMapItem Clone()
 		{
 			LipSyncMapItem retVal = new LipSyncMapItem();
 			retVal.Name = Name;
-			retVal.PhonemeList = new Dictionary<string, bool>(PhonemeList);
+			retVal.PhonemeList = new Dictionary<string, bool>(PhonemeList, StringComparer.OrdinalIgnoreCase);
 			retVal.StringNum = StringNum;
 			retVal.ElementColor = ElementColor;
 			retVal.ElementGuid = ElementGuid;
-			retVal.ElementColors = new Dictionary<PhonemeType, Color>(ElementColors);
+			retVal.FaceComponents = new Dictionary<FaceComponent, bool>(FaceComponents);
 
 			return retVal;
 		}
@@ -53,13 +49,13 @@ namespace VixenModules.App.LipSyncApp
 		public Color ElementColor { get; set; }
 
 		[DataMember]
-		public Dictionary<PhonemeType, Color> ElementColors { get; set; }
-
-		[DataMember]
 		private string _stringName;
 
 		[DataMember]
 		public Guid ElementGuid { get; set; }
+
+		[DataMember]
+		public Dictionary<FaceComponent, bool> FaceComponents { get; set; }
 
 		public string Name 
 		{ 
@@ -81,6 +77,24 @@ namespace VixenModules.App.LipSyncApp
 		public override string ToString()
 		{
 			return Name;
+		}
+
+		[OnDeserialized]
+		private void OnDeserialized(StreamingContext context)
+		{
+			if (FaceComponents == null)
+			{
+				FaceComponents = new Dictionary<FaceComponent, bool>();
+				if (PhonemeList.Values.Any(x => x))
+				{
+					FaceComponents.Add(FaceComponent.Mouth, true);
+				}
+			}
+
+			if (!PhonemeList.Comparer.Equals(StringComparer.OrdinalIgnoreCase))
+			{
+				PhonemeList = new Dictionary<string, Boolean>(PhonemeList, StringComparer.OrdinalIgnoreCase);
+			}
 		}
 
 	}

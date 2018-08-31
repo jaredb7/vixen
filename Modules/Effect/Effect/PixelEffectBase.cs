@@ -16,6 +16,7 @@ using VixenModules.App.Curves;
 using VixenModules.Effect.Effect.Location;
 using VixenModules.EffectEditor.EffectDescriptorAttributes;
 using VixenModules.Property.Location;
+using VixenModules.Property.Orientation;
 
 namespace VixenModules.Effect.Effect
 {
@@ -35,6 +36,20 @@ namespace VixenModules.Effect.Effect
 		private int _stringCount;
 		private int _maxPixelsPerString;
 		private Curve _baseLevelCurve = new Curve(CurveType.Flat100);
+		private bool _elementsCached;
+		private List<Element> _cachedElements;
+
+		public void CacheElementEnumerator()
+		{
+			_cachedElements = TargetNodes.First()?.Distinct().ToList();
+			_elementsCached = true;
+		}
+
+		public void UloadElementCache()
+		{
+			_cachedElements = null;
+			_elementsCached = false;
+		}
 
 		protected override EffectIntents _Render()
 		{
@@ -53,11 +68,12 @@ namespace VixenModules.Effect.Effect
 			}
 			
 			SetupRender();
-			EffectIntents data = new EffectIntents();
+			int bufferSize = StringPixelCounts.Sum();
+			EffectIntents data = new EffectIntents(bufferSize);
 			foreach (ElementNode node in TargetNodes)
 			{
 				if (node != null)
-					data.Add(RenderNode(node));
+					RenderNode(node, ref data);
 			}
 			_elementData = data;
 			CleanUpRender();
@@ -114,6 +130,10 @@ namespace VixenModules.Effect.Effect
 				if (TargetPositioning == TargetPositioningType.Locations)
 				{
 					StringOrientation = StringOrientation.Vertical;
+				}
+				else
+				{
+					SetOrientation();
 				}
 				UpdateStringOrientationAttributes(true);
 				TargetPositioningChanged();
@@ -177,9 +197,8 @@ namespace VixenModules.Effect.Effect
 			}
 		}
 
-		private void CalculatePixelsPerString()
+		private void CalculatePixelsPerString(IEnumerable<ElementNode> nodes)
 		{
-			IEnumerable<ElementNode> nodes = FindLeafParents();
 			StringPixelCounts.Clear();
 			foreach (var node in nodes)
 			{
@@ -187,9 +206,9 @@ namespace VixenModules.Effect.Effect
 			}
 		}
 
-		private int CalculateMaxStringCount()
+		private int CalculateMaxStringCount(IEnumerable<ElementNode> nodes)
 		{
-			return FindLeafParents().Count();
+			return nodes.Count();
 		}
 
 		protected IEnumerable<ElementNode> FindLeafParents()
@@ -199,7 +218,7 @@ namespace VixenModules.Effect.Effect
 
 			if (TargetNodes.FirstOrDefault() != null)
 			{
-				nonLeafElements = TargetNodes.SelectMany(x => x.GetNonLeafEnumerator()).ToList();
+				nonLeafElements = TargetNodes.SelectMany(x => x.GetNonLeafEnumerator());
 				foreach (var elementNode in TargetNodes)
 				{
 					foreach (var leafNode in elementNode.GetLeafEnumerator())
@@ -216,7 +235,25 @@ namespace VixenModules.Effect.Effect
 
 		protected override void TargetNodesChanged()
 		{
+			if (TargetPositioning == TargetPositioningType.Strings)
+			{
+				SetOrientation();
+			}
 			CalculateStringCounts();
+		}
+
+		protected void SetOrientation()
+		{
+			var orientation = OrientationModule.GetOrientationForElement(TargetNodes.First());
+			switch (orientation)
+			{
+				case Orientation.Horizontal:
+					StringOrientation = StringOrientation.Horizontal;
+					break;
+				default:
+					StringOrientation = StringOrientation.Vertical;
+					break;
+			}
 		}
 
 		private void ConfigureStringBuffer()
@@ -229,9 +266,10 @@ namespace VixenModules.Effect.Effect
 
 		private void CalculateStringCounts()
 		{
-			CalculatePixelsPerString();
+			var nodes = FindLeafParents();
+			CalculatePixelsPerString(nodes);
 			MaxPixelsPerString = StringPixelCounts.Concat(new[] {0}).Max();
-			StringCount = CalculateMaxStringCount();
+			StringCount = CalculateMaxStringCount(nodes);
 		}
 
 		private void ConfigureVirtualBuffer()
@@ -313,18 +351,17 @@ namespace VixenModules.Effect.Effect
 		}
 
 
-		protected EffectIntents RenderNode(ElementNode node)
+		protected EffectIntents RenderNode(ElementNode node, ref EffectIntents effectIntents)
 		{
 			if (TargetPositioning == TargetPositioningType.Strings)
 			{
-				return RenderNodeByStrings(node);
+				return RenderNodeByStrings(node, ref effectIntents);
 			}
-			return RenderNodeByLocation(node);
+			return RenderNodeByLocation(node, ref effectIntents);
 		}
 
-		protected EffectIntents RenderNodeByLocation(ElementNode node)
+		protected EffectIntents RenderNodeByLocation(ElementNode node, ref EffectIntents effectIntents)
 		{
-			EffectIntents effectIntents = new EffectIntents();
 			int nFrames = GetNumberFrames();
 			if (nFrames <= 0 | BufferWi == 0 || BufferHt == 0) return effectIntents;
 			PixelLocationFrameBuffer buffer = new PixelLocationFrameBuffer(ElementLocations, nFrames);
@@ -347,15 +384,14 @@ namespace VixenModules.Effect.Effect
 			return effectIntents;
 		}
 
-		protected EffectIntents RenderNodeByStrings(ElementNode node)
+		protected EffectIntents RenderNodeByStrings(ElementNode node, ref EffectIntents effectIntents)
 		{
-			EffectIntents effectIntents = new EffectIntents();
 			int nFrames = GetNumberFrames();
-			if (nFrames <= 0 | BufferWi==0 || BufferHt==0) return effectIntents;
+			if (nFrames <= 0 | BufferWi==0 || BufferHt==0) return new EffectIntents();
 			var buffer = new PixelFrameBuffer(BufferWi, BufferHt, UseBaseColor?BaseColor:Color.Transparent);
 
 			int bufferSize = StringPixelCounts.Sum();
-
+			
 			TimeSpan startTime = TimeSpan.Zero;
 
 			// set up arrays to hold the generated colors
@@ -405,11 +441,12 @@ namespace VixenModules.Effect.Effect
 					}
 				}
 			}
-
+			
 			// create the intents
 			var frameTs = new TimeSpan(0, 0, 0, 0, FrameTime);
-			List<Element> elements = node.Distinct().ToList();
-			int numElements = elements.Count();
+			var elements = _elementsCached?_cachedElements:node.Distinct().ToList();
+			int numElements = elements.Count;
+
 			for (int eidx = 0; eidx < numElements; eidx++)
 			{
 				IIntent intent = new StaticArrayIntent<RGBValue>(frameTs, pixels[eidx], TimeSpan);
@@ -442,6 +479,12 @@ namespace VixenModules.Effect.Effect
 			return (int)(TimeSpan.TotalMilliseconds / FrameTime);
 		}
 
+		protected double GetRemainingTime(int frame)
+		{
+			return (TimeSpan.TotalMilliseconds -
+			        TimeSpan.TotalMilliseconds / 100 * (GetEffectTimeIntervalPosition(frame) * 100));
+		}
+		
 		protected double CalculateAcceleration(double ratio, double accel)
 		{
 			if (accel == 0) return ratio;

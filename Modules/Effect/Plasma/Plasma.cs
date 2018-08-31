@@ -238,16 +238,17 @@ namespace VixenModules.Effect.Plasma
 			double plasmaSpeed = (101 - speed) * 3;
 			var time = (position + 1.0)/plasmaSpeed;
 			double level = LevelCurve.GetValue(intervalPosFactor) / 100;
+			double lineDensity = CalculateLineDensity(intervalPosFactor) * Pi;
 
 			for (int x = 0; x < BufferWi; x++)
 			{
 				for (int y = 0; y < BufferHt; y++)
 				{
-					CalculatePixel(x, y, time, frame, level, frameBuffer, intervalPosFactor);
+					CalculatePixel(x, y, time, frame, level, frameBuffer, lineDensity);
 				}
 			}
 		}
-
+		
 		protected override void RenderEffectByLocation(int numFrames, PixelLocationFrameBuffer frameBuffer)
 		{
 			var nodes = frameBuffer.ElementLocations.OrderBy(x => x.X).ThenBy(x => x.Y).GroupBy(x => x.X);
@@ -261,22 +262,22 @@ namespace VixenModules.Effect.Plasma
 				double plasmaSpeed = (101 - speed) * 3;
 				var time = (position + 1.0) / plasmaSpeed;
 				double level = LevelCurve.GetValue(intervalPosFactor) / 100;
+				double lineDensity = CalculateLineDensity(intervalPosFactor) * Pi;
 
 				foreach (IGrouping<int, ElementLocation> elementLocations in nodes)
 				{
 					foreach (var elementLocation in elementLocations)
 					{
-						CalculatePixel(elementLocation.X, elementLocation.Y, time, frame, level, frameBuffer, intervalPosFactor);
+						CalculatePixel(elementLocation.X, elementLocation.Y, time, frame, level, frameBuffer, lineDensity);
 					}
 				}
 			}
 		}
 
-		private void CalculatePixel(int x, int y, double time, int frame, double level, IPixelFrameBuffer frameBuffer, double intervalPosFactor)
+		private void CalculatePixel(int x, int y, double time, int frame, double level, IPixelFrameBuffer frameBuffer, double lineDensity)
 		{
 			int yCoord = y;
 			int xCoord = x;
-			var lineDensity = CalculateLineDensity(intervalPosFactor);
 
 			if (TargetPositioning == TargetPositioningType.Locations)
 			{
@@ -311,30 +312,34 @@ namespace VixenModules.Effect.Plasma
 			{
 				case PlasmaColorType.Normal:
 
-					var h = Math.Sin(v * lineDensity * Pi + 2 * Pi / 3) + 1 * 0.5;
+					var h = Math.Sin(v * lineDensity + 2 * Pi / 3) + 1 * 0.5;
 					color = GetMultiColorBlend(h/2, frame);
 					break;
 				case PlasmaColorType.Preset1:
-					color = Color.FromArgb((int)((Math.Sin(v * lineDensity * Pi) + 1) * 128), (int)((Math.Cos(v * lineDensity * Pi) + 1) * 128),
+					color = Color.FromArgb((int)((Math.Sin(v * lineDensity) + 1) * 128), (int)((Math.Cos(v * lineDensity) + 1) * 128),
 						0);
 					break;
 				case PlasmaColorType.Preset2:
-					color = Color.FromArgb(1, (int)((Math.Cos(v * lineDensity * Pi) + 1) * 128),
-						(int)((Math.Sin(v * lineDensity * Pi) + 1) * 128));
+					color = Color.FromArgb(1, (int)((Math.Cos(v * lineDensity) + 1) * 128),
+						(int)((Math.Sin(v * lineDensity) + 1) * 128));
 					break;
 
 				case PlasmaColorType.Preset3:
-					color = Color.FromArgb((int)((Math.Sin(v * lineDensity * Pi) + 1) * 128),
-						(int)((Math.Sin(v * lineDensity * Pi + 2 * Pi / 3) + 1) * 128), (int)((Math.Sin(v * lineDensity * Pi + 4 * Pi / 3) + 1) * 128));
+					color = Color.FromArgb((int)((Math.Sin(v * lineDensity) + 1) * 128),
+						(int)((Math.Sin(v * lineDensity + 2 * Pi / 3) + 1) * 128), (int)((Math.Sin(v * lineDensity + 4 * Pi / 3) + 1) * 128));
 					break;
 				case PlasmaColorType.Preset4:
-					color = Color.FromArgb((int)((Math.Sin(v * lineDensity * Pi) + 1) * 128), (int)((Math.Sin(v * lineDensity * Pi) + 1) * 128),
-						(int)((Math.Sin(v * lineDensity * Pi) + 1) * 128));
+					color = Color.FromArgb((int)((Math.Sin(v * lineDensity) + 1) * 128), (int)((Math.Sin(v * lineDensity) + 1) * 128),
+						(int)((Math.Sin(v * lineDensity) + 1) * 128));
 					break;
 			}
-			HSV hsv = HSV.FromRGB(color);
-			hsv.V = hsv.V*level;
-			frameBuffer.SetPixel(xCoord, yCoord, hsv);
+			if (level < 1)
+			{
+				HSV hsv = HSV.FromRGB(color);
+				hsv.V = hsv.V * level;
+				color = hsv.ToRGB();
+			}
+			frameBuffer.SetPixel(xCoord, yCoord, color);
 
 		}
 
@@ -359,7 +364,7 @@ namespace VixenModules.Effect.Plasma
 			int colorcnt = Colors.Count();
 			if (colorcnt <= 1)
 			{
-				return Colors[0].GetColorAt((GetEffectTimeIntervalPosition(frame) * 100) / 100);
+				return Colors[0].GetColorAt(GetEffectTimeIntervalPosition(frame));
 			}
 			if (n >= 1.0) n = 0.99999;
 			if (n < 0.0) n = 0.0;
@@ -371,9 +376,9 @@ namespace VixenModules.Effect.Plasma
 
 		public Color Get2ColorBlend(int coloridx1, int coloridx2, double ratio, int frame)
 		{
-			Color c1, c2;
-			c1 = Colors[coloridx1].GetColorAt((GetEffectTimeIntervalPosition(frame) * 100) / 100);
-			c2 = Colors[coloridx2].GetColorAt((GetEffectTimeIntervalPosition(frame) * 100) / 100);
+			var pos = GetEffectTimeIntervalPosition(frame);
+			var c1 = Colors[coloridx1].GetColorAt(pos);
+			var c2 = Colors[coloridx2].GetColorAt(pos);
 
 			return Color.FromArgb(ChannelBlend(c1.R, c2.R, ratio), ChannelBlend(c1.G, c2.G, ratio), ChannelBlend(c1.B, c2.B, ratio));
 		}

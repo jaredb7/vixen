@@ -8,11 +8,13 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Xml;
 using System.Xml.Serialization;
 using System.Runtime;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using Vixen.Module.Editor;
 using Vixen.Module.SequenceType;
 using Vixen.Services;
@@ -24,7 +26,11 @@ using Common.Controls.Scaling;
 using Common.Controls.Theme;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Application = System.Windows.Forms.Application;
+using Point = System.Drawing.Point;
+using SystemFonts = System.Drawing.SystemFonts;
 using Timer = System.Windows.Forms.Timer;
+using WPFApplication = System.Windows.Application;
 
 namespace VixenApplication
 {
@@ -41,10 +47,12 @@ namespace VixenApplication
 		private bool _openExecution = true;
 		private bool _disableControllers = false;
 		private bool _devBuild = false;
+		private bool _testBuild;
 		private string _rootDataDirectory;
 		private CpuUsage _cpuUsage;
 		private bool _perfCountersAvailable;
-		private string _currentBuildVersion;
+		private int _currentBuildVersion;
+		private string _currentReleaseVersion;
 
 
 		private VixenApplicationData _applicationData;
@@ -52,7 +60,26 @@ namespace VixenApplication
 		public VixenApplication()
 		{
 			InitializeComponent();
-			labelVersion.Font = new Font("Segoe UI", 14);
+
+            //Begin WPF init
+		    if (WPFApplication.Current == null)
+		    {
+		        // create the Application object
+		        var app = new WPFApplication();
+		    }
+
+		    WPFApplication.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            //Load up the common WPF them file for our WPF application parts.
+            ResourceDictionary dict = new ResourceDictionary
+		    {
+		        Source = new Uri("/WPFCommon;component/Theme/Theme.xaml", UriKind.Relative)
+		    };
+
+		    WPFApplication.Current.Resources.MergedDictionaries.Add(dict);
+
+            //End WPF init
+
+            labelVersion.Font = new Font("Segoe UI", 14);
 			//Get rid of the ugly grip that we dont want to show anyway. 
 			//Workaround for a MS bug
 			statusStrip.Padding = new Padding(statusStrip.Padding.Left,
@@ -355,28 +382,42 @@ namespace VixenApplication
 
 			_devBuild = version.Major == 0;
 
-			if (_devBuild) {
-				labelVersion.Text = "DevBuild";
-
-			} else {
-				labelVersion.Text = string.Format("{0}.{1}", version.Major, version.Minor);
-				if (version.Revision > 0) {
-					labelVersion.Text += string.Format("u{0}", version.Revision);
-				}
-				toolStripStatusUpdates.Text = " Version " + CheckLatestReleaseVersion() + " available.";
-			}
-
-			if (version.Build > 0)
+			if (_devBuild)
 			{
-				labelDebugVersion.Text = string.Format("Build #{0}", version.Build);
-				_currentBuildVersion = labelDebugVersion.Text;
-				toolStripStatusUpdates.Text = " Build " + CheckLatestBuildVersion() + " available.";
+				if (version.Build > 0)
+				{
+					labelVersion.Text = @"Development Build";
+					labelDebugVersion.Text = $@"Build #{version.Build}" ;
+					_currentBuildVersion = version.Build;
+					labelDebugVersion.ForeColor = labelVersion.ForeColor = Color.Yellow;
+					Logging.Info($"{labelVersion.Text} - {labelDebugVersion.Text}");
+					CheckForDevBuildUpdates();
+				}
+				else
+				{
+					labelVersion.Text = @"Test Build";
+					labelDebugVersion.Text = $@"Build #";
+					labelDebugVersion.ForeColor = labelVersion.ForeColor = Color.Red;
+					toolStripStatusUpdates.Text = String.Empty;
+					Logging.Info($"{labelVersion.Text}");
+					_testBuild = true;
+				}
+
+				
 			}
 			else
 			{
-				labelDebugVersion.Text = @"Test Build";
-				toolStripStatusUpdates.Text = "";
-				labelDebugVersion.ForeColor = Color.Yellow;
+				_currentReleaseVersion = $@"{version.Major}.{version.Minor}";
+				if (version.Revision > 0)
+				{
+					_currentReleaseVersion += $@"u{version.Revision}";
+				}
+				labelVersion.Text = $@"Release {_currentReleaseVersion}";
+				labelDebugVersion.Text = $@"Build #{version.Build}";
+				_currentBuildVersion = version.Build;
+				Logging.Info($"{labelVersion.Text} - {labelDebugVersion.Text}");
+
+				CheckForReleaseUpdates();
 			}
 
 			labelDebugVersion.Visible = true;
@@ -386,25 +427,55 @@ namespace VixenApplication
 			Logging.Info(".NET Runtime is: {0}", runtimeVersion);
 		}
 
+		private async void CheckForReleaseUpdates()
+		{
+			var version =await CheckLatestReleaseVersionAsync();
+			if (!string.IsNullOrEmpty(version))
+			{
+				toolStripStatusUpdates.Text = $@" Release version {version} available.";
+				Logging.Info(toolStripStatusUpdates.Text);
+			}
+		}
 
-		public string CheckLatestBuildVersion()
+		private async void CheckForDevBuildUpdates()
+		{
+			var version = await CheckLatestBuildVersionAsync();
+			if (!string.IsNullOrEmpty(version))
+			{
+				toolStripStatusUpdates.Text = $@" Development build {version} available.";
+				Logging.Info(toolStripStatusUpdates.Text);
+			}
+		}
+
+		public async Task<string> CheckLatestBuildVersionAsync()
 		{
 			try
 			{
-				using (WebClient wc = new WebClient())
+				if (await CheckForConnectionToWebsite())
 				{
-					//Get Latest Build
-					string getLatestDevelopementBuild =
-						wc.DownloadString(
-							"http://bugs.vixenlights.com/rest/api/latest/search?jql=Project='Vixen 3' AND fixVersion=DevBuild AND 'Fix Build Number'>500 ORDER BY 'Fix Build Number' DESC&startAt=0&maxResults=1");
-					//This will parse the latest development build number
-					dynamic developementBuild = JObject.Parse(getLatestDevelopementBuild);
-					int latestDevelopementBuild = developementBuild.issues[0].fields.customfield_10112;
-					//This does not return an array as the results are contained in a wrapper object for paging info
-					//There results are in an array called issues, with in that is a set of fields that contain our custom field 
-					if (latestDevelopementBuild > Convert.ToInt16(_currentBuildVersion))
+					using (HttpClient wc = new HttpClient())
 					{
-						return latestDevelopementBuild.ToString();
+						wc.Timeout = TimeSpan.FromMilliseconds(5000);
+						//Get Latest Build
+						string getLatestDevelopementBuild =
+							await wc.GetStringAsync(
+								$"http://bugs.vixenlights.com/rest/api/latest/search?jql=Project='Vixen 3' AND fixVersion=DevBuild AND 'Fix Build Number'>{_currentBuildVersion} ORDER BY 'Fix Build Number' DESC&startAt=0&maxResults=1");
+						//This will parse the latest development build number
+						dynamic developementBuild = JObject.Parse(getLatestDevelopementBuild);
+						if (developementBuild.issues.Count > 0)
+						{
+							if (developementBuild.issues[0].fields.customfield_10112 != null)
+							{
+								int latestDevelopementBuild = developementBuild.issues[0].fields.customfield_10112;
+								//This does not return an array as the results are contained in a wrapper object for paging info
+								//There results are in an array called issues, with in that is a set of fields that contain our custom field 
+								if (latestDevelopementBuild > _currentBuildVersion)
+								{
+									return latestDevelopementBuild.ToString();
+								}
+							}
+						}
+						
 					}
 				}
 			}
@@ -413,28 +484,32 @@ namespace VixenApplication
 				//Should only get here if there is no internet connection and e will stipulate that it can't get to the http://bugs.vixenlights.com website.
 				Logging.Error("Checking for the latest Development Build failed - " + e);
 			}
-			return "";
+			return string.Empty;
 		}
 
-		public string CheckLatestReleaseVersion()
+		public async Task<string> CheckLatestReleaseVersionAsync()
 		{
 			try
 			{
-				using (WebClient wc = new WebClient())
+				if (await CheckForConnectionToWebsite())
 				{
-					//Get the Latest Release
-					string getReleaseVersion =
-						wc.DownloadString("http://bugs.vixenlights.com/rest/api/latest/project/VIX/versions?orderBy=releaseDate");
-					//Query returns an array of release version objects
-					var releaseVersions = JArray.Parse(getReleaseVersion);
-					//get the last one that has released == true as they are in asending order
-					dynamic lastReleaseVersion = releaseVersions.Last(m => (bool)m.SelectToken("released"));
-					//This is the name of the release
-					string releaseVersion = lastReleaseVersion.name;
-
-					if (releaseVersion != labelVersion.Text)
+					using (HttpClient wc = new HttpClient())
 					{
-						return releaseVersion;
+						wc.Timeout = TimeSpan.FromMilliseconds(5000);
+						//Get the Latest Release
+						string getReleaseVersion =
+							await wc.GetStringAsync("http://bugs.vixenlights.com/rest/api/latest/project/VIX/versions?orderBy=releaseDate");
+						//Query returns an array of release version objects
+						var releaseVersions = JArray.Parse(getReleaseVersion);
+						//get the last one that has released == true as they are in asending order
+						dynamic lastReleaseVersion = releaseVersions.Last(m => (bool)m.SelectToken("released"));
+						//This is the name of the release
+						string releaseVersion = lastReleaseVersion.name;
+
+						if (releaseVersion != _currentReleaseVersion)
+						{
+							return releaseVersion;
+						}
 					}
 				}
 			}
@@ -448,7 +523,7 @@ namespace VixenApplication
 
 		private void CheckForTestBuild()
 		{
-			if (_devBuild) 
+			if (_devBuild && !_testBuild) //Don't annoy developers 
 			{
 				//messageBox Arguments are (Text, Title, No Button Visible, Cancel Button Visible)
 				MessageBoxForm.msgIcon = SystemIcons.Exclamation;
@@ -547,7 +622,7 @@ namespace VixenApplication
 					throw new NotImplementedException("SelectProfile.ShowDialog() returned " + result.ToString());
 				}
 			}
-
+			Logging.Info($"Profile root : {_rootDataDirectory}");
 			SetLogFilePaths();
 		}
 
@@ -1073,31 +1148,32 @@ namespace VixenApplication
 			Process.Start("http://www.vixenlights.com/vixen-3-documentation/");
 		}
 
-		private void UpdatesMenu_Click(object sender, EventArgs e)
+		private async void UpdatesMenu_Click(object sender, EventArgs e)
 		{
 			string currentVersion;
 			string latestVersion;
 			string currentVersionType;
-			
-			if (!CheckForConnectionToWebsite())
-			{
-				var messageBox = new MessageBoxForm("Unable to reach http://bugs.vixenlights.com. Please connect to the internet and try again.", "Error", MessageBoxButtons.OK, SystemIcons.Error);
-				messageBox.ShowDialog();
-				return;
-			}
 
 			Cursor = Cursors.WaitCursor;
 
+			if (! await CheckForConnectionToWebsite())
+			{
+				var messageBox = new MessageBoxForm("Unable to reach http://bugs.vixenlights.com. Please check your internet connection and verify you can reach the site and try again.", "Error", MessageBoxButtons.OK, SystemIcons.Error);
+				messageBox.ShowDialog();
+				Cursor = Cursors.Arrow;
+				return;
+			}
+
 			if (_devBuild)
 			{
-				currentVersion = _currentBuildVersion;
-				latestVersion = CheckLatestBuildVersion();
+				currentVersion = _currentBuildVersion.ToString();
+				latestVersion = await CheckLatestBuildVersionAsync();
 				currentVersionType = "DevBuild";
 			}
 			else
 			{
-				currentVersion = labelVersion.Text;
-				latestVersion = CheckLatestReleaseVersion();
+				currentVersion = _currentReleaseVersion;
+				latestVersion = await CheckLatestReleaseVersionAsync();
 				currentVersionType = "Release";
 			}
 
@@ -1107,13 +1183,14 @@ namespace VixenApplication
 			Cursor = Cursors.Default;
 		}
 
-		public static bool CheckForConnectionToWebsite()
+		public static async Task<bool> CheckForConnectionToWebsite()
 		{
 			try
 			{
-				using (var client = new WebClient())
+				using (var client = new HttpClient())
 				{
-					using (client.OpenRead("http://bugs.vixenlights.com"))
+					client.Timeout = TimeSpan.FromMilliseconds(5000);
+					using (await client.GetAsync("http://bugs.vixenlights.com"))
 					{
 						return true;
 					}
@@ -1134,7 +1211,7 @@ namespace VixenApplication
 
 		private void AboutMenu_Click(object sender, EventArgs e)
 		{
-			string currentVersion = _devBuild ? _currentBuildVersion : labelVersion.Text;
+			string currentVersion = _devBuild ? _currentBuildVersion.ToString() : _currentReleaseVersion;
 			var aboutVixen = new AboutVixen(currentVersion, _devBuild);
 			aboutVixen.ShowDialog();
 			aboutVixen.Dispose();

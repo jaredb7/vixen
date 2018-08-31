@@ -75,10 +75,16 @@
     <Compile Include="PixelEffectBase.cs" />
     <Compile Include="PixelFrameBuffer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StandardMediaExtensions.cs" />
     <Compile Include="StringOrientation.cs" />
     <Compile Include="TargetPositioningType.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\Controls\Controls.csproj">
+      <Project>{a54fb6a1-a9c3-488c-b961-41b8dbc81b36}</Project>
+      <Name>Controls</Name>
+      <Private>False</Private>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\Vixen.System\Vixen.csproj">
       <Project>{50B78623-FCF4-48AF-93FF-FA87C937028F}</Project>
       <Name>Vixen</Name>
@@ -107,6 +113,11 @@
     <ProjectReference Include="..\..\Property\Location\Location.csproj">
       <Project>{7D5D4BE4-576A-4092-A3E2-1A6F27CDC213}</Project>
       <Name>Location</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Property\Orientation\Orientation.csproj">
+      <Project>{3bcd7307-c584-4770-bc60-4142ddc88c76}</Project>
+      <Name>Orientation</Name>
       <Private>False</Private>
     </ProjectReference>
   </ItemGroup>

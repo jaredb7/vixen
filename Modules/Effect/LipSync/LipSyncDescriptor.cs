@@ -21,6 +21,13 @@ namespace VixenModules.Effect.LipSync
 			get { return EffectGroups.Basic; }
 		}
 
+		#region Overrides of EffectModuleDescriptorBase
+
+		/// <inheritdoc />
+		public override bool SupportsMarks => true;
+
+		#endregion
+
 		public override Guid TypeId
 		{
 			get { return _typeId; }
@@ -56,16 +63,6 @@ namespace VixenModules.Effect.LipSync
 			get { return "1.0"; }
 		}
 
-		public override ParameterSignature Parameters
-		{
-			get
-			{
-				return new ParameterSignature(
-					new ParameterSpecification("StaticPhoneme", typeof(string),false),
-					new ParameterSpecification("PGOFilename", typeof(string),false),
-					new ParameterSpecification("PhonemeMapping", typeof(string),false)
-					);
-			}
-		}
+		public override ParameterSignature Parameters => new ParameterSignature();
 	}
 }

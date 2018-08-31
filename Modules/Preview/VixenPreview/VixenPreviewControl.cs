@@ -8,10 +8,6 @@ using System.IO;
 using System.Windows.Forms;
 using Common.Controls;
 using Common.Controls.Theme;
-using Common.Controls;
-using Common.Controls.ControlsEx.ListControls;
-using Common.Controls.Timeline;
-using Vixen.Data.Value;
 using Vixen.Execution.Context;
 using Vixen.Sys;
 using VixenModules.Editor.VixenPreviewSetup3.Undo;
@@ -20,9 +16,16 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Collections.Concurrent;
+using Catel.IoC;
+using Catel.Services;
+using Vixen;
+using VixenModules.App.CustomPropEditor.Model;
+using VixenModules.App.CustomPropEditor.Services;
+using VixenModules.Preview.VixenPreview.Undo;
 using VixenModules.Property.Location;
 using DisplayItem = VixenModules.Preview.VixenPreview.Shapes.DisplayItem;
 using Element = Vixen.Sys.Element;
+using Size = System.Drawing.Size;
 
 namespace VixenModules.Preview.VixenPreview
 {
@@ -119,6 +122,10 @@ namespace VixenModules.Preview.VixenPreview
 
 		public event SelectDisplayItemEventHandler OnSelectDisplayItem;
 
+		public delegate void SelectionChangedEventHandler(object sender, EventArgs args);
+
+		public event SelectionChangedEventHandler OnSelectionChanged;
+
 		public delegate void DeSelectDisplayItemEventHandler(object sender, DisplayItem displayItem);
 
 		public event DeSelectDisplayItemEventHandler OnDeSelectDisplayItem;
@@ -161,11 +168,8 @@ namespace VixenModules.Preview.VixenPreview
 			get { return _zoomLevel; }
 			set
 			{
-				double ZoomMax = 4;
-				if (IntPtr.Size != 8)
-				{
-					ZoomMax = 2;
-				}
+				double ZoomMax = 2;
+				
 				const double ZoomMin = .25;
 
 				if (value >= ZoomMin && value <= ZoomMax)
@@ -212,6 +216,8 @@ namespace VixenModules.Preview.VixenPreview
 		{
 			get { return _highlightedElements; }
 		}
+
+		public bool IsSingleItemSelected => _selectedDisplayItem != null;
 
 		public List<DisplayItem> SelectedDisplayItems
 		{
@@ -316,6 +322,9 @@ namespace VixenModules.Preview.VixenPreview
 			contextMenuStrip1.Renderer = new ThemeToolStripRenderer();
 			PreviewItemsResizingNew += vixenpreviewControl_PreviewItemsResizingNew;
 			PreviewItemsMovedNew += vixenpreviewControl_PreviewItemsMovedNew;
+			AllowDrop = true;
+			DragEnter += VixenPreviewSetup3_DragEnter;
+			DragDrop += VixenPreviewSetup3_DragDrop;
 			SetStyle(ControlStyles.UserPaint, true);
 			SetStyle(ControlStyles.DoubleBuffer, true);
 			_selectedDisplayItem = null;
@@ -502,6 +511,7 @@ namespace VixenModules.Preview.VixenPreview
 					DisplayItem item = DisplayItemAtPoint(point);
 					if (item != null)
 						SelectedDisplayItems.Add(item);
+					OnSelectionChanged?.Invoke(this, EventArgs.Empty);
 				}
 				else
 				{
@@ -514,19 +524,21 @@ namespace VixenModules.Preview.VixenPreview
 						_selectedDisplayItem.Shape.Select(true);
 						OnSelectDisplayItem(this, _selectedDisplayItem);
 					}
+
+					OnSelectionChanged?.Invoke(this, EventArgs.Empty);
 				}
 			}
 		}
 
-		public void selectItem(PreviewPoint point)
-		{
-			_selectedDisplayItem = DisplayItemAtPoint(point);
-			if (_selectedDisplayItem != null)
-			{
-				_selectedDisplayItem.Shape.Select(true);
-				OnSelectDisplayItem(this, _selectedDisplayItem);
-			}
-		}
+		//public void selectItem(PreviewPoint point)
+		//{
+		//	_selectedDisplayItem = DisplayItemAtPoint(point);
+		//	if (_selectedDisplayItem != null)
+		//	{
+		//		_selectedDisplayItem.Shape.Select(true);
+		//		OnSelectDisplayItem(this, _selectedDisplayItem);
+		//	}
+		//}
 
 		private bool _mouseCaptured = false;
 		private bool _banding = false;
@@ -547,6 +559,7 @@ namespace VixenModules.Preview.VixenPreview
 							if (item != null && SelectedDisplayItems.Contains(item))
 							{
 								SelectedDisplayItems.Remove(item);
+								OnSelectionChanged?.Invoke(this, EventArgs.Empty);
 							}
 							else
 							{
@@ -602,6 +615,7 @@ namespace VixenModules.Preview.VixenPreview
 							else
 							{
 								SelectedDisplayItems.Clear();
+								OnSelectionChanged?.Invoke(this, EventArgs.Empty);
 							}
 						}
 
@@ -615,6 +629,7 @@ namespace VixenModules.Preview.VixenPreview
 							Capture = true;
 							_mouseCaptured = true;
 							SelectedDisplayItems.Clear();
+							OnSelectionChanged?.Invoke(this, EventArgs.Empty);
 							_bandRect.Width = 0;
 							_bandRect.Height = 0;
 							_banding = true;
@@ -756,26 +771,25 @@ namespace VixenModules.Preview.VixenPreview
 
 					if (_selectedDisplayItem != null)
 					{
-						PreviewPoint selectedPoint = _selectedDisplayItem.Shape.PointInSelectPoint(translatedPoint);
 						if (_selectedDisplayItem.Shape.PointInShape(translatedPoint))
 						{
-							if (_selectedDisplayItem.Shape.GetType().ToString().Contains("PreviewCustom"))
+							if (_selectedDisplayItem.Shape.GetType() == typeof(PreviewCustom))
 							{
 								contextMenuStrip1.Items.Add(new ToolStripMenuItem
 								{
-									Text = "Separate Template Items",
-									Tag = "Separate",
+									Text = "Ungroup",
+									Tag = "Ungroup",
 									Image = Common.Resources.Properties.Resources.Split
 								});
 							}
 						}
 					}
-					else if (SelectedDisplayItems.Count > 1)
+					else if (SelectedDisplayItems.Count > 1 && SelectedDisplayItems.All(x => x.Shape.GetType() != typeof(PreviewCustomProp)))
 					{
 						contextMenuStrip1.Items.Add(new ToolStripMenuItem
 						{
-							Text = "Create Group...",
-							Tag = "CreateGroup",
+							Text = "Group",
+							Tag = "Group",
 							Image = Common.Resources.Properties.Resources.group
 						});
 						contextMenuStrip1.Items.Add(new ToolStripSeparator());
@@ -903,14 +917,14 @@ namespace VixenModules.Preview.VixenPreview
 						_selectedDisplayItem.Shape.Select(true);
 					}
 					break;
-				case "CreateGroup":
+				case "Group":
 					_selectedDisplayItem = CreateGroup();
 					if (_selectedDisplayItem != null)
 					{
 						_selectedDisplayItem.Shape.Select(true);
 					}
 					break;
-				case "Separate":
+				case "Ungroup":
 					if (_selectedDisplayItem != null)
 						SeparateTemplateItems(_selectedDisplayItem);
 					break;
@@ -1038,11 +1052,13 @@ namespace VixenModules.Preview.VixenPreview
 								if (!SelectedDisplayItems.Contains(item))
 								{
 									SelectedDisplayItems.Add(item);
+									OnSelectionChanged?.Invoke(this, EventArgs.Empty);
 								}
 							}
 							else if (SelectedDisplayItems.Contains(item))
 							{
 								SelectedDisplayItems.Remove(item);
+								OnSelectionChanged?.Invoke(this, EventArgs.Empty);
 							}
 						}
 					}
@@ -1297,6 +1313,7 @@ namespace VixenModules.Preview.VixenPreview
 						_selectedDisplayItem.Shape.Select(true);
 						OnSelectDisplayItem(this, _selectedDisplayItem);
 						SelectedDisplayItems.Clear();
+						OnSelectionChanged?.Invoke(this, EventArgs.Empty);
 					}
 					else
 					{
@@ -1403,6 +1420,7 @@ namespace VixenModules.Preview.VixenPreview
 				OnDeSelectDisplayItem(this, _selectedDisplayItem);
 				_selectedDisplayItem.Shape.Deselect();
 				_selectedDisplayItem = null;
+				OnSelectionChanged?.Invoke(this, EventArgs.Empty);
 			}
 		}
 
@@ -1540,6 +1558,7 @@ namespace VixenModules.Preview.VixenPreview
 					DeSelectSelectedDisplayItem();
 				}
 				SelectedDisplayItems.Clear();
+				OnSelectionChanged?.Invoke(this, EventArgs.Empty);
 			}
 		}
 
@@ -1563,6 +1582,7 @@ namespace VixenModules.Preview.VixenPreview
 			else if (_selectedDisplayItem != null)
 			{
 				SelectedDisplayItems.Add(_selectedDisplayItem);
+				OnSelectionChanged?.Invoke(this, EventArgs.Empty);
 				string xml = PreviewTools.SerializeToString(SelectedDisplayItems);
 				Clipboard.SetData(DataFormats.Text, xml);
 			}
@@ -1595,8 +1615,7 @@ namespace VixenModules.Preview.VixenPreview
 			var displayItemTemp = PreviewTools.DeSerializeToDisplayItemList(rhs.OriginalPreviewItem[0]);
 			foreach (var temp1 in displayItemTemp)
 			{
-				var temp = lhs;
-				var newObject = temp;
+				var newObject = lhs;
 				rhs.OriginalPreviewItem.Clear();
 				List<DisplayItem> newObjectList = new List<DisplayItem>();
 				newObjectList.Add(newObject);
@@ -1604,6 +1623,21 @@ namespace VixenModules.Preview.VixenPreview
 				lhs.Shape = temp1.Shape;
 			}
 		}
+
+		#endregion
+
+		#region Preview Item Pixel Size change.
+
+		public void PixelResizeSwapPlaces(List<DisplayItem> changedPreviewItems, PreviewItemPixelSizeInfo info)
+		{
+			var reverseChange = -info.ChangeAmount;
+			foreach (DisplayItem e in changedPreviewItems)
+			{
+				e.Shape.ResizePixelsBy(reverseChange);
+				info.ChangeAmount = reverseChange;
+			}
+		}
+
 		#endregion
 
 		public void ResizeBackground(int width, int height)
@@ -1642,12 +1676,15 @@ namespace VixenModules.Preview.VixenPreview
 
 			foreach (DisplayItem item in SelectedDisplayItems)
 			{
-				if (item.Shape.GetType().ToString().Contains("PreviewCustom"))
+				if (item.Shape.GetType() == typeof(PreviewCustom))
 				{
-					//messageBox Arguments are (Text, Title, No Button Visible, Cancel Button Visible)
-					MessageBoxForm.msgIcon = SystemIcons.Error; //this is used if you want to add a system icon to the message form.
-					var messageBox = new MessageBoxForm("You cannot create a group or a template with an item that is already grouped or a template item. First, separate the items and then re-group all the items you would like.",
-						"Grouping Error", false, true);
+					var messageBox = new MessageBoxForm("You cannot create a group or a template with an item that is already grouped or a template item. First, separate the items and then re-group all the items you would like.", "Grouping Error", MessageBoxButtons.OK, SystemIcons.Error);
+					messageBox.ShowDialog();
+					return null;
+				}
+				if (item.Shape.GetType() == typeof(PreviewCustomProp))
+				{
+					var messageBox = new MessageBoxForm("Grouping or creating a template with a Custom Prop is not suppported at this time.", "Grouping Error", MessageBoxButtons.OK, SystemIcons.Error);
 					messageBox.ShowDialog();
 					return null;
 				}
@@ -1656,6 +1693,7 @@ namespace VixenModules.Preview.VixenPreview
 
 			AddNewGroup(out newDisplayItem, null);
 			SelectedDisplayItems.Clear();
+			OnSelectionChanged?.Invoke(this, EventArgs.Empty);
 			var action = new PreviewItemsGroupAddedUndoAction(this, newDisplayItem);//Start Undo Action.
 			UndoManager.AddUndoAction(action);
 			return newDisplayItem;
@@ -1755,6 +1793,115 @@ namespace VixenModules.Preview.VixenPreview
 			}
 		}
 
+		internal async Task ImportCustomProp()
+		{
+			var dependencyResolver = this.GetDependencyResolver();
+			var openFileService = dependencyResolver.Resolve<IOpenFileService>();
+			openFileService.IsMultiSelect = false;
+			openFileService.InitialDirectory = PropModelServices.Instance().ModelsFolder;
+			openFileService.Filter = "Prop Files(*.prp)|*.prp";
+			if (await openFileService.DetermineFileAsync())
+			{
+				string path = openFileService.FileNames.First();
+				await ImportCustomPropFromFile(path);
+			}
+		}
+
+		private async Task ImportCustomPropFromFile(string path)
+		{
+			await ImportCustomPropFromFile(path, new Point(20, 20));
+		}
+
+
+		private async Task ImportCustomPropFromFile(string path, Point location)
+		{
+			if (!string.IsNullOrEmpty(path))
+			{
+				Cursor = Cursors.WaitCursor;
+				
+				Prop p = await PropModelPersistenceService.GetModelAsync(path);
+				if (p != null)
+				{
+					await AddPropToPreviewAsync(p, location);
+				}
+				else
+				{
+					MessageBoxForm mbf = new MessageBoxForm("An error occured loading the prop.", "Prop Load Error!",MessageBoxButtons.OK,SystemIcons.Error);
+					mbf.ShowDialog(this);
+				}
+				Cursor = Cursors.Arrow;
+			}
+		}
+
+		private async void VixenPreviewSetup3_DragDrop(object sender, DragEventArgs e)
+		{
+			string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+
+			var p = PointToClient(new Point(e.X, e.Y));
+			Point translatedPoint = new Point(p.X + hScroll.Value, p.Y + vScroll.Value);
+
+			foreach (string file in files)
+			{
+				if (file.EndsWith(".prp"))
+				{
+					await ImportCustomPropFromFile(file, translatedPoint);
+				}
+			}
+		}
+
+		private void VixenPreviewSetup3_DragEnter(object sender, DragEventArgs e)
+		{
+			if (e.Data.GetDataPresent(DataFormats.FileDrop))
+			{
+				string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+				if (files != null && files.Any(x => x.EndsWith(".prp")))
+				{
+					e.Effect = DragDropEffects.Copy;
+				}
+			}
+		}
+
+		internal async Task AddPropToPreviewAsync(Prop p, Point location)
+		{
+			PreviewCustomPropBuilder builder = new PreviewCustomPropBuilder(p, ZoomLevel, this);
+			await builder.CreateAsync();
+			OnElementsChanged?.Invoke(this, EventArgs.Empty);
+
+			var newDisplayItem = new DisplayItem();
+			newDisplayItem.Shape = builder.PreviewCustomProp;
+			//Ensure a reasonable size.
+			if (builder.PreviewCustomProp.Bounds.Height > 100)
+			{
+				builder.PreviewCustomProp.Resize(100d / builder.PreviewCustomProp.Bounds.Height);
+			}
+			else if (builder.PreviewCustomProp.Bounds.Width > 100)
+			{
+				builder.PreviewCustomProp.Resize(100d / builder.PreviewCustomProp.Bounds.Width);
+			}
+			newDisplayItem.Shape.MoveTo(location.X, location.Y);
+			DisplayItems.Add(newDisplayItem);
+			SelectedDisplayItems.Clear();
+			OnSelectionChanged?.Invoke(this, EventArgs.Empty);
+		}
+
+		internal string GetSubstitutionString(string token)
+		{
+			if (InvokeRequired)
+			{
+				return (string)Invoke(new Delegates.GenericString(GetSubstitutionString), token);
+			}
+
+			var returnValue = string.Empty;
+			MessageBoxService mbs = new MessageBoxService();
+			var response = mbs.GetUserInput($"Enter token replacement value for {token}.", "Prop naming", "1", ParentForm);
+			if (response.Result == MessageResult.OK)
+			{
+				returnValue = response.Response;
+			}
+
+			return returnValue;
+		}
+
 		public void SeparateTemplateItems(DisplayItem displayItem)
 		{
 			foreach (PreviewBaseShape shape in displayItem.Shape._strings)
@@ -1777,10 +1924,61 @@ namespace VixenModules.Preview.VixenPreview
 					DeSelectSelectedDisplayItem();
 				}
 				SelectedDisplayItems.Clear();
+				OnSelectionChanged?.Invoke(this, EventArgs.Empty);
 			}
 		}
 
 		#endregion
+
+		#region Bulb Size
+
+		public void IncreaseBulbSize()
+		{
+			if (_selectedDisplayItem != null && !SelectedShapes().Any())
+			{
+				_selectedDisplayItem.Shape.ResizePixelsBy(1);
+				PixelResize(1, new List<DisplayItem>( new [] {_selectedDisplayItem}));
+			}
+			else
+			{
+				foreach (PreviewBaseShape shape in SelectedShapes())
+				{
+					shape.ResizePixelsBy(1);
+				}
+				PixelResize(1, SelectedDisplayItems);
+			}
+		}
+
+		public void DecreaseBulbSize()
+		{
+			if (_selectedDisplayItem != null && !SelectedShapes().Any())
+			{
+				_selectedDisplayItem.Shape.ResizePixelsBy(-1);
+				PixelResize(1, new List<DisplayItem>(new[] { _selectedDisplayItem }));
+			}
+			else
+			{
+				foreach (PreviewBaseShape shape in SelectedShapes())
+				{
+					shape.ResizePixelsBy(-1);
+				}
+				PixelResize(-1, SelectedDisplayItems);
+			}
+		}
+
+		public void MatchBulbSize()
+		{
+			foreach (PreviewBaseShape shape in SelectedShapes())
+			{
+				if (shape != SelectedShapes()[0])
+				{
+					shape.MatchPixelSize(SelectedShapes()[0]);
+				}
+			}
+		}
+
+		#endregion
+
 
 		#region Alignment Tools
 
@@ -1908,9 +2106,7 @@ namespace VixenModules.Preview.VixenPreview
                 {
                     if (shape.GetType().ToString() != SelectedShapes()[0].GetType().ToString())
                     {
-						//messageBox Arguments are (Text, Title, No Button Visible, Cancel Button Visible)
-						MessageBoxForm.msgIcon = SystemIcons.Error; //this is used if you want to add a system icon to the message form.
-						var messageBox = new MessageBoxForm("You can only match the properties of like shapes.", "Match Properties", false, true);
+						var messageBox = new MessageBoxForm("You can only match the properties of like shapes.", "Match Properties", MessageBoxButtons.OK, SystemIcons.Error);
 						messageBox.ShowDialog();
                         return;
                     }
@@ -1980,78 +2176,78 @@ namespace VixenModules.Preview.VixenPreview
 		//}
 		//#endregion
 
-		public void ProcessUpdateParallel( /*Vixen.Preview.PreviewElementIntentStates elementStates*/)
-		{
-			renderTimer.Reset();
-			renderTimer.Start();
-			CancellationTokenSource tokenSource = new CancellationTokenSource();
-			if (!_paused)
-			{
-				Bitmap clone = (Bitmap) _alphaBackground.Clone();
-				using (FastPixel.FastPixel fp = new FastPixel.FastPixel(clone))
-				{
-					try
-					{
-						fp.Lock();
+		//public void ProcessUpdateParallel( /*Vixen.Preview.PreviewElementIntentStates elementStates*/)
+		//{
+		//	renderTimer.Reset();
+		//	renderTimer.Start();
+		//	CancellationTokenSource tokenSource = new CancellationTokenSource();
+		//	if (!_paused)
+		//	{
+		//		Bitmap clone = (Bitmap) _alphaBackground.Clone();
+		//		using (FastPixel.FastPixel fp = new FastPixel.FastPixel(clone))
+		//		{
+		//			try
+		//			{
+		//				fp.Lock();
 
-						Vixen.Preview.PreviewElementIntentStates elementStates =
-							new Vixen.Preview.PreviewElementIntentStates(VixenSystem.Elements.ToDictionary(x => x, x => x.State));
+		//				Vixen.Preview.PreviewElementIntentStates elementStates =
+		//					new Vixen.Preview.PreviewElementIntentStates(VixenSystem.Elements.ToDictionary(x => x, x => x.State));
 
-						elementStates.AsParallel().WithCancellation(tokenSource.Token).ForAll(channelIntentState =>
-						{
-							Element element = channelIntentState.Key;
-							if (element != null)
-							{
-								ElementNode node = VixenSystem.Elements.GetElementNodeForElement(element);
-								if (node != null)
-								{
-									List<PreviewPixel> pixels;
-									if (NodeToPixel.TryGetValue(node, out pixels))
-									{
-										foreach (PreviewPixel pixel in pixels)
-										{
-											pixel.Draw(fp, channelIntentState.Value);
-										}
-									}
-								}
-							}
-						});
-						fp.Unlock(true);
-						RenderBufferedGraphics(fp);
-					}
-					catch (Exception)
-					{
-						tokenSource.Cancel();
-					}
-				}
-			}
+		//				elementStates.AsParallel().WithCancellation(tokenSource.Token).ForAll(channelIntentState =>
+		//				{
+		//					Element element = channelIntentState.Key;
+		//					if (element != null)
+		//					{
+		//						ElementNode node = VixenSystem.Elements.GetElementNodeForElement(element);
+		//						if (node != null)
+		//						{
+		//							List<PreviewPixel> pixels;
+		//							if (NodeToPixel.TryGetValue(node, out pixels))
+		//							{
+		//								foreach (PreviewPixel pixel in pixels)
+		//								{
+		//									pixel.Draw(fp, channelIntentState.Value);
+		//								}
+		//							}
+		//						}
+		//					}
+		//				});
+		//				fp.Unlock(true);
+		//				RenderBufferedGraphics(fp);
+		//			}
+		//			catch (Exception)
+		//			{
+		//				tokenSource.Cancel();
+		//			}
+		//		}
+		//	}
 
-			renderTimer.Stop();
-			lastRenderUpdateTime = renderTimer.ElapsedMilliseconds;
-		}
+		//	renderTimer.Stop();
+		//	lastRenderUpdateTime = renderTimer.ElapsedMilliseconds;
+		//}
 
-		private object lockObject = new object();
+		//private object lockObject = new object();
 
 		private delegate void RenderBufferedGraphicsDelgate(FastPixel.FastPixel fp /*, Bitmap floodBG*/);
 
-		private void RenderBufferedGraphics(FastPixel.FastPixel fp /*, Bitmap floodBG*/)
-		{
-			if (this.InvokeRequired)
-			{
-				this.Invoke(new RenderBufferedGraphicsDelgate(RenderBufferedGraphics), fp /*, floodBG*/);
-			}
-			else
-				// No, this doesn't allocate every time. It first checks to see if the screen is 
-				// resized or the graphics buffer is not allocated. So it is checked for validity every time
-				// and re-allocated only if the something changed.
-				AllocateGraphicsBuffer(false);
+		//private void RenderBufferedGraphics(FastPixel.FastPixel fp /*, Bitmap floodBG*/)
+		//{
+		//	if (this.InvokeRequired)
+		//	{
+		//		this.Invoke(new RenderBufferedGraphicsDelgate(RenderBufferedGraphics), fp /*, floodBG*/);
+		//	}
+		//	else
+		//		// No, this doesn't allocate every time. It first checks to see if the screen is 
+		//		// resized or the graphics buffer is not allocated. So it is checked for validity every time
+		//		// and re-allocated only if the something changed.
+		//		AllocateGraphicsBuffer(false);
 
-			// First, draw our background image opaque
-			bufferedGraphics.Graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
-			bufferedGraphics.Graphics.DrawImage(fp.Bitmap, 0, 0, fp.Width, fp.Height);
-			if (!this.Disposing && bufferedGraphics != null)
-				bufferedGraphics.Render(Graphics.FromHwnd(this.Handle));
-		}
+		//	// First, draw our background image opaque
+		//	bufferedGraphics.Graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+		//	bufferedGraphics.Graphics.DrawImage(fp.Bitmap, 0, 0, fp.Width, fp.Height);
+		//	if (!this.Disposing && bufferedGraphics != null)
+		//		bufferedGraphics.Render(Graphics.FromHwnd(this.Handle));
+		//}
 
 		#region "Foreground updates"
 
@@ -2140,8 +2336,8 @@ namespace VixenModules.Preview.VixenPreview
 					if (!p.Node.Properties.Contains(LocationDescriptor._typeId))
 						p.Node.Properties.Add(LocationDescriptor._typeId);
 					var prop = p.Node.Properties.Get(LocationDescriptor._typeId);
-					((LocationData) prop.ModuleData).X = p.X;
-					((LocationData) prop.ModuleData).Y = p.Y;
+					((LocationData) prop.ModuleData).X = p.IsHighPrecision ? (int)p.Location.X:p.X + Convert.ToInt32(Data.LocationOffset.X);
+					((LocationData) prop.ModuleData).Y = p.IsHighPrecision ? (int)p.Location.Y:p.Y + Convert.ToInt32(Data.LocationOffset.Y);
 					((LocationData) prop.ModuleData).Y = p.Z;
 				}
 			}
@@ -2209,55 +2405,25 @@ namespace VixenModules.Preview.VixenPreview
 		public void beginResize_Move(bool multi)
 		{
 			if (!multi)
+			{
 				SelectedDisplayItems.Add(_selectedDisplayItem);
+				OnSelectionChanged?.Invoke(this, EventArgs.Empty);
+			}
 			m_previewItemResizeMoveInfo = new PreviewItemResizeMoveInfo(SelectedDisplayItems);
 			if (!multi)
+			{
 				SelectedDisplayItems.Clear();
-		}
-
-		public class PreviewItemResizeMoveInfo
-		{
-			public PreviewItemResizeMoveInfo(List<DisplayItem> modifyingElements)
-			{
-				OriginalPreviewItem = new Dictionary<DisplayItem, PreviewItemPositionInfo>();
-
-				foreach (var previewItem in modifyingElements)
-				{
-					if (OriginalPreviewItem.ContainsKey(previewItem))
-					{
-						OriginalPreviewItem[previewItem] = new PreviewItemPositionInfo(previewItem);
-					}
-					else
-					{
-						OriginalPreviewItem.Add(previewItem, new PreviewItemPositionInfo(previewItem));
-					}
-				}
+				OnSelectionChanged?.Invoke(this, EventArgs.Empty);
 			}
-
-			///<summary>The point on the grid where the mouse first went down.</summary>
-			//		public PreviewPoint InitialGridLocation { get; private set; }
-
-			///<summary>All elements being modified and their original parameters.</summary>
-			public Dictionary<DisplayItem, PreviewItemPositionInfo> OriginalPreviewItem { get; private set; }
 		}
 
-		public class PreviewItemPositionInfo
+		public void PixelResize(int changeAmount, List<DisplayItem> displayItems)
 		{
-			public PreviewItemPositionInfo(DisplayItem previewItem)
-			{
-				TopPosition = previewItem.Shape.Top;
-				LeftPosition = previewItem.Shape.Left;
-				List<DisplayItem> temp = new List<DisplayItem>();
-				temp.Add(previewItem);
-				OriginalPreviewItem = new List<string>();
-				OriginalPreviewItem.Add(PreviewTools.SerializeToString(temp));
-			}
-
-			public List<string> OriginalPreviewItem { get; set; }
-
-			public int TopPosition { get; set; }
-			public int LeftPosition { get; set; }
+			var info = new PreviewItemPixelSizeInfo(changeAmount);
+			PreviewItemPixelSizeChangeUndoAction action = new PreviewItemPixelSizeChangeUndoAction(this, displayItems, info);
+			UndoManager.AddUndoAction(action);
 		}
+		
 	}
 
 	#endregion
